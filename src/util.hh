@@ -21,10 +21,12 @@ std::string zeropad(const int t, const int tmax);
     {                                                                  \
         Rcpp::Rcerr << "[" << curr_time() << "] " << msg << std::endl; \
     }
+
 #define ELOG(msg)                                                              \
     {                                                                          \
         Rcpp::Rcerr << "[" << curr_time() << "] [Error] " << msg << std::endl; \
     }
+
 #define WLOG(msg)                                                  \
     {                                                              \
         Rcpp::Rcerr << "[" << curr_time() << "] [Warning] " << msg \

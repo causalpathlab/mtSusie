@@ -1,6 +1,7 @@
 #include "fastexp.h"
 #include "fastlog.h"
 #include "fastgamma.h"
+#include <cmath>
 
 #ifndef _UTIL_MATH_HH_
 #define _UTIL_MATH_HH_

@@ -1,12 +1,190 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <limits>
 
 #include "math.hh"
 #include "util.hh"
 
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/binomial_distribution.hpp>
+#include <boost/random/poisson_distribution.hpp>
+#include <boost/random/gamma_distribution.hpp>
+#include <boost/random/discrete_distribution.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/uniform_01.hpp>
+
 #ifndef EIGEN_UTIL_HH_
 #define EIGEN_UTIL_HH_
+
+#define DIM(mat)                                                       \
+    {                                                                  \
+        Rcpp::Rcerr << mat.rows() << " x " << mat.cols() << std::endl; \
+    }
+
+template <typename T>
+struct softmax_op_t {
+    using Scalar = typename T::Scalar;
+    using Index = typename T::Index;
+    using RowVec = typename Eigen::internal::plain_row_type<T>::type;
+    using ColVec = typename Eigen::internal::plain_col_type<T>::type;
+
+    inline RowVec apply_row(Eigen::Ref<const RowVec> logits)
+    {
+        return log_row(logits).unaryExpr(exp_op);
+    }
+
+    inline ColVec apply_col(Eigen::Ref<const ColVec> logits)
+    {
+        return log_col(logits).unaryExpr(exp_op);
+    }
+
+    inline RowVec log_row(Eigen::Ref<const RowVec> logits)
+    {
+        Index K = logits.size();
+        Scalar log_denom = logits.coeff(0);
+        for (Index k = 1; k < K; ++k) {
+            log_denom = log_sum_exp(log_denom, logits.coeff(k));
+        }
+        return (logits.array() - log_denom).eval();
+    }
+
+    inline ColVec log_col(Eigen::Ref<const ColVec> logits)
+    {
+        Index K = logits.size();
+        Scalar log_denom = logits.coeff(0);
+        for (Index k = 1; k < K; ++k) {
+            log_denom = log_sum_exp(log_denom, logits.coeff(k));
+        }
+        return (logits.array() - log_denom).eval();
+    }
+
+    struct log_sum_exp_t {
+        Scalar operator()(const Scalar log_a, const Scalar log_b)
+        {
+            Scalar v;
+            if (log_a < log_b) {
+                v = log_b + fasterlog(1. + fasterexp(log_a - log_b));
+            } else {
+                v = log_a + fasterlog(1. + fasterexp(log_b - log_a));
+            }
+            return v;
+        }
+    } log_sum_exp;
+
+    struct exp_op_t {
+        const Scalar operator()(const Scalar x) const { return fasterexp(x); }
+    } exp_op;
+};
+
+template <typename T, typename RNG>
+struct rowvec_sampler_t {
+    using Scalar = typename T::Scalar;
+    using Index = typename T::Index;
+
+    using disc_distrib = boost::random::discrete_distribution<>;
+    using disc_param = disc_distrib::param_type;
+    using RowVec = typename Eigen::internal::plain_row_type<T>::type;
+
+    explicit rowvec_sampler_t(RNG &_rng, const Index k)
+        : rng(_rng)
+        , K(k)
+        , _prob(k)
+    {
+    }
+
+    inline Index operator()(const RowVec &prob)
+    {
+        Eigen::Map<RowVec>(&_prob[0], 1, K) = prob;
+        return _rdisc(rng, disc_param(_prob));
+    }
+
+    RNG &rng;
+    const Index K;
+    std::vector<Scalar> _prob;
+    disc_distrib _rdisc;
+};
+
+template <typename T, typename RNG>
+struct matrix_sampler_t {
+
+    using disc_distrib = boost::random::discrete_distribution<>;
+    using disc_param = disc_distrib::param_type;
+
+    using Scalar = typename T::Scalar;
+    using Index = typename T::Index;
+
+    using IndexVec = std::vector<Index>;
+
+    explicit matrix_sampler_t(RNG &_rng, const Index k)
+        : rng(_rng)
+        , K(k)
+        , _weights(k)
+        , _rdisc(_weights)
+    {
+    }
+
+    template <typename Derived>
+    const IndexVec &sample(const Eigen::MatrixBase<Derived> &W)
+    {
+        using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
+        check_size(W);
+
+        for (Index g = 0; g < W.rows(); ++g) {
+            Eigen::Map<ROW>(&_weights[0], 1, K) = W.row(g);
+            _sampled[g] = _rdisc(rng, disc_param(_weights));
+        }
+        return _sampled;
+    }
+
+    template <typename Derived>
+    const IndexVec &sample_logit(const Eigen::MatrixBase<Derived> &W)
+    {
+        using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
+        check_size(W);
+
+        for (Index g = 0; g < W.rows(); ++g) {
+            Eigen::Map<ROW>(&_weights[0], 1, K) = softmax.apply_row(W.row(g));
+            _sampled[g] = _rdisc(rng, disc_param(_weights));
+        }
+        return _sampled;
+    }
+
+    template <typename Derived>
+    const IndexVec &operator()(const Eigen::MatrixBase<Derived> &W)
+    {
+        return sample(W);
+    }
+
+    template <typename Derived>
+    void check_size(const Eigen::MatrixBase<Derived> &W)
+    {
+        if (W.rows() != _sampled.size())
+            _sampled.resize(W.rows());
+
+        if (W.cols() != _weights.size())
+            _weights.resize(W.cols());
+    }
+
+    const IndexVec &sampled() const { return _sampled; }
+
+    void copy_to(IndexVec &dst) const
+    {
+        if (dst.size() != _sampled.size())
+            dst.resize(_sampled.size());
+
+        std::copy(std::begin(_sampled), std::end(_sampled), std::begin(dst));
+    }
+
+    RNG &rng;
+    const Index K;
+    std::vector<Scalar> _weights;
+    disc_distrib _rdisc;
+    IndexVec _sampled;
+
+    softmax_op_t<T> softmax;
+};
 
 template <typename EigenVec>
 inline auto
@@ -354,55 +532,6 @@ hcat(const Eigen::MatrixBase<Derived> &_left,
 }
 
 template <typename Derived>
-inline typename Derived::Scalar
-log_sum_exp(const Eigen::MatrixBase<Derived> &log_vec)
-{
-    using Scalar = typename Derived::Scalar;
-    using Index = typename Derived::Index;
-
-    const Derived &xx = log_vec.derived();
-
-    Scalar maxlogval = xx(0);
-    for (Index j = 1; j < xx.size(); ++j) {
-        if (xx(j) > maxlogval)
-            maxlogval = xx(j);
-    }
-
-    Scalar ret = 0;
-    for (Index j = 0; j < xx.size(); ++j) {
-        ret += fasterexp(xx(j) - maxlogval);
-    }
-    ret = fasterlog(ret) + maxlogval;
-    return ret;
-}
-
-template <typename Derived, typename Derived2>
-inline typename Derived::Scalar
-normalized_exp(const Eigen::MatrixBase<Derived> &_log_vec,
-               Eigen::MatrixBase<Derived2> &_ret)
-{
-    using Scalar = typename Derived::Scalar;
-    using Index = typename Derived::Index;
-
-    const Derived &log_vec = _log_vec.derived();
-    Derived &ret = _ret.derived();
-
-    Index argmax;
-    const Scalar log_denom = log_vec.maxCoeff(&argmax);
-
-    auto _exp = [&log_denom](const Scalar log_z) {
-        return fasterexp(log_z - log_denom);
-    };
-
-    ret = log_vec.unaryExpr(_exp).eval();
-    const Scalar denom = ret.sum();
-    ret /= denom;
-
-    const Scalar log_normalizer = fasterlog(denom) + log_denom;
-    return log_normalizer;
-}
-
-template <typename Derived>
 inline Eigen::Matrix<typename Derived::Scalar,
                      Eigen::Dynamic,
                      Eigen::Dynamic,
@@ -584,6 +713,8 @@ struct running_stat_t {
         }
         return Var;
     }
+
+    const T sd() { return var().cwiseSqrt(); }
 
     const Index d1;
     const Index d2;

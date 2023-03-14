@@ -1,7 +1,3 @@
-// #include <boost/graph/adjacency_list.hpp>
-// #include <boost/graph/connected_components.hpp>
-// #include <boost/lexical_cast.hpp>
-
 // [[Rcpp::plugins(cpp14)]]
 #include <Rcpp.h>
 // [[Rcpp::depends(RcppEigen)]]
@@ -27,12 +23,14 @@
 #include <tuple>
 #include <utility>
 #include <unordered_map>
+#include <memory>
 
 #include "eigen_util.hh"
 #include "std_util.hh"
 #include "math.hh"
 #include "util.hh"
 #include "check.hh"
+#include "tuple_util.hh"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,8 +43,8 @@ extern "C" {
 }
 #endif
 
-#ifndef MMUTIL_HH_
-#define MMUTIL_HH_
+#ifndef MT_SUSIE_HH_
+#define MT_SUSIE_HH_
 
 using Scalar = float;
 using SpMat = Eigen::SparseMatrix<Scalar, Eigen::RowMajor, std::ptrdiff_t>;
@@ -60,18 +58,7 @@ using IntMat = typename Eigen::
     Matrix<std::ptrdiff_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
 using IntVec = typename Eigen::Matrix<std::ptrdiff_t, Eigen::Dynamic, 1>;
 
-/////////////////////////////
-// simple helper functions //
-/////////////////////////////
-
-std::tuple<Index, Index, Scalar>
-parse_triplet(const std::tuple<Index, Index, Scalar> &tt);
-
-std::tuple<Index, Index, Scalar>
-parse_triplet(const Eigen::Triplet<Scalar> &tt);
-
-std::vector<std::string> copy(const Rcpp::StringVector &r_vec);
-
-void copy(const Rcpp::StringVector &r_vec, std::vector<std::string> &vec);
+#include "mtSusie_util.hh"
+#include "mtSusie_shared_effect.hh"
 
 #endif
