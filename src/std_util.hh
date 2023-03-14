@@ -23,14 +23,24 @@ std::vector<std::string> split(const std::string &s, char delim);
 
 template <typename Vec>
 auto
-std_argsort(const Vec &data)
+std_argsort(const Vec &data, bool descending = true)
 {
     using Index = std::ptrdiff_t;
     std::vector<Index> index(data.size());
     std::iota(std::begin(index), std::end(index), 0);
-    std::sort(std::begin(index), std::end(index), [&](Index lhs, Index rhs) {
-        return data.at(lhs) > data.at(rhs);
-    });
+    if (descending) {
+        std::sort(std::begin(index),
+                  std::end(index),
+                  [&](Index lhs, Index rhs) {
+                      return data.at(lhs) > data.at(rhs);
+                  });
+    } else {
+        std::sort(std::begin(index),
+                  std::end(index),
+                  [&](Index lhs, Index rhs) {
+                      return data.at(lhs) < data.at(rhs);
+                  });
+    }
     return index;
 }
 

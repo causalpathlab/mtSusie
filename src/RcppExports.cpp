@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // fit_mt_susie
-Rcpp::List fit_mt_susie(const Rcpp::NumericMatrix& x, const Rcpp::NumericMatrix& y, const std::size_t levels, const std::size_t max_iter, const std::size_t min_iter, const double tol, const double prior_var);
-RcppExport SEXP _mtSusie_fit_mt_susie(SEXP xSEXP, SEXP ySEXP, SEXP levelsSEXP, SEXP max_iterSEXP, SEXP min_iterSEXP, SEXP tolSEXP, SEXP prior_varSEXP) {
+Rcpp::List fit_mt_susie(const Rcpp::NumericMatrix& x, const Rcpp::NumericMatrix& y, const std::size_t levels, const std::size_t max_iter, const std::size_t min_iter, const double coverage, const double tol, const double prior_var, const double lodds_cutoff);
+RcppExport SEXP _mtSusie_fit_mt_susie(SEXP xSEXP, SEXP ySEXP, SEXP levelsSEXP, SEXP max_iterSEXP, SEXP min_iterSEXP, SEXP coverageSEXP, SEXP tolSEXP, SEXP prior_varSEXP, SEXP lodds_cutoffSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,15 +22,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::size_t >::type levels(levelsSEXP);
     Rcpp::traits::input_parameter< const std::size_t >::type max_iter(max_iterSEXP);
     Rcpp::traits::input_parameter< const std::size_t >::type min_iter(min_iterSEXP);
+    Rcpp::traits::input_parameter< const double >::type coverage(coverageSEXP);
     Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< const double >::type prior_var(prior_varSEXP);
-    rcpp_result_gen = Rcpp::wrap(fit_mt_susie(x, y, levels, max_iter, min_iter, tol, prior_var));
+    Rcpp::traits::input_parameter< const double >::type lodds_cutoff(lodds_cutoffSEXP);
+    rcpp_result_gen = Rcpp::wrap(fit_mt_susie(x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mtSusie_fit_mt_susie", (DL_FUNC) &_mtSusie_fit_mt_susie, 7},
+    {"_mtSusie_fit_mt_susie", (DL_FUNC) &_mtSusie_fit_mt_susie, 9},
     {NULL, NULL, 0}
 };
 
