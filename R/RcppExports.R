@@ -8,6 +8,7 @@ NULL
 #' Calibrate credible sets per level
 #' @param model
 #' @param coverage
+#' @param pip_cutoff
 #'
 NULL
 
@@ -26,7 +27,7 @@ NULL
 #' \item{alpha}{Posterior probability of variant across k traits; `alpha[j,l]`}
 #' \item{resid.var}{Residual variance; `alpha[l,k]`}
 #'
-fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 5L, coverage = .9, tol = 1e-8, prior_var = 100.0, lodds_cutoff = 0) {
-    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff)
+fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 5L, coverage = .9, tol = 1e-8, prior_var = 100.0, lodds_cutoff = 0, min_pip_cutoff = NULL) {
+    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff)
 }
 

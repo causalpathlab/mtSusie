@@ -22,10 +22,13 @@ mt_susie_output(const MODEL &model)
 //' Calibrate credible sets per level
 //' @param model
 //' @param coverage
+//' @param pip_cutoff
 //'
 template <typename MODEL>
 Rcpp::List
-mt_susie_credible_sets(MODEL &model, const Scalar coverage)
+mt_susie_credible_sets(MODEL &model,
+                       const Scalar coverage,
+                       const Scalar pip_cutoff)
 {
     using svec = std::vector<Scalar>;
     using ivec = std::vector<Index>;
@@ -68,6 +71,8 @@ mt_susie_credible_sets(MODEL &model, const Scalar coverage)
         for (Index i = 0; i < model.p; ++i) {
             const Index j = order.at(i);
             cum += alpha.at(j);
+            if (alpha.at(j) < pip_cutoff)
+                break;
             for (Index t = 0; t < model.m; ++t) {
                 variants.emplace_back(j + 1); // 1-based
                 traits.emplace_back(t + 1);   // 1-based
@@ -120,7 +125,8 @@ fit_mt_susie(const Rcpp::NumericMatrix &x,
              const double coverage = .9,
              const double tol = 1e-8,
              const double prior_var = 100.0,
-             const double lodds_cutoff = 0)
+             const double lodds_cutoff = 0,
+             Rcpp::Nullable<double> min_pip_cutoff = R_NilValue)
 {
 
     shared_regression_t model(y.rows(), y.cols(), x.cols(), levels, prior_var);
@@ -149,8 +155,12 @@ fit_mt_susie(const Rcpp::NumericMatrix &x,
         loglik.emplace_back(curr);
     }
 
+    const Scalar _pip_cutoff = min_pip_cutoff.isNotNull() ?
+        Rcpp::as<Scalar>(min_pip_cutoff) :
+        (1. / static_cast<Scalar>(x.cols()));
+
     Rcpp::List ret = mt_susie_output(model);
     ret["loglik"] = loglik;
-    ret["cs"] = mt_susie_credible_sets(model, coverage);
+    ret["cs"] = mt_susie_credible_sets(model, coverage, _pip_cutoff);
     return ret;
 }
