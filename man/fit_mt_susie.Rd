@@ -55,6 +55,17 @@ a list of mtSusie results
 \item{L}{number of layers/levels}
 \item{loglik}{log-likelihood trace}
 \item{cs}{credible sets (use \code{data.table::setDT} to assemble)}
+
+In the \code{cs}, we have
+\item{variants}{variant indexes \verb{[1 .. p]}}
+\item{traits}{trait indexes \verb{[1 .. m]}}
+\item{levels}{levels \verb{[1 .. L]}}
+\item{alpha}{shared PIP}
+\item{mean}{univariate mean}
+\item{var}{univariate var}
+\item{z}{univariate z-score}
+\item{lfsr}{local false sign rate}
+\item{lodds}{log-odds ratio}
 }
 \description{
 Estimate a multi-trait Sum of Single Effect regression model

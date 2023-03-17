@@ -11,7 +11,9 @@ struct shared_effect_stat_t {
         : p(num_variable)
         , m(num_output)
         , alpha_p(p)
+        , alpha0_p(p)
         , lbf_p(p)
+        , lbf0_p(p)
         , post_mean_pm(p, m)
         , post_var_pm(p, m)
         , lbf_pm(p, m)
@@ -21,6 +23,7 @@ struct shared_effect_stat_t {
         , XtY_pm(p, m)
         , x2_p(p)
         , lodds_m(m)
+        , temp_m(m)
         , v0(1)
         , lbf_op(v0)
     {
@@ -29,7 +32,9 @@ struct shared_effect_stat_t {
     const Index p, m;
 
     ColVec alpha_p;   // p x 1 combined PIP
+    ColVec alpha0_p;  // p x 1 null PIP
     ColVec lbf_p;     // log Bayes Factor
+    ColVec lbf0_p;    // null lbf
     Mat post_mean_pm; // posterior mean
     Mat post_var_pm;  // posterior variance
 
@@ -41,6 +46,7 @@ struct shared_effect_stat_t {
     Mat XtY_pm;     // sufficient stat
     ColVec x2_p;    // sufficient stat
     RowVec lodds_m; // 1 x m log odds
+    RowVec temp_m;  // 1 x m temporary
 
     Scalar v0;
 
@@ -87,36 +93,51 @@ template <typename STAT>
 Index
 calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
 {
+    // a. Initialization of shared PIP
     {
         stat.lbf_p = stat.lbf_pm.rowwise().sum();
-        const Scalar maxlbf = stat.lbf_p.maxCoeff();
+        Scalar maxlbf = stat.lbf_p.maxCoeff();
         stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
         stat.alpha_p /= stat.alpha_p.sum();
     }
+
     const Index m = stat.lodds_m.size();
     Index nretain = m, nretain_old = m;
 
-    for (Index inner = 0; inner < m; ++inner) {
-        // a. Determine which outputs to include
-        // H1: sum_j log alpha[j,k] * alpha[j]
-        // H0: sum_j log alpha[j,k] * 1/p
-        stat.lodds_m = stat.alpha_p.transpose() * stat.lbf_pm;
-        stat.lodds_m -= stat.lbf_pm.colwise().mean();
+    const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
+    stat.alpha0_p.setConstant(p0);
 
+    for (Index inner = 0; inner < m; ++inner) {
+        // b. Determine which outputs to include
+        // H1: sum_j log alpha[j,k] * alpha[j]
+        // H0: sum_j log alpha[j,k] * null[j]
+        stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
         nretain = (stat.lodds_m.array() > lodds_cutoff).count();
 
-        // b. only some of the output variables > lodds
+        // c. only some of the output variables > lodds
         if (nretain > 0 && nretain < nretain_old) {
             stat.lbf_p.setZero();
+            stat.lbf0_p.setZero();
             for (Index k = 0; k < m; ++k) {
                 if (stat.lodds_m(k) > lodds_cutoff) {
                     stat.lbf_p += stat.lbf_pm.col(k);
+                } else {
+                    stat.lbf0_p += stat.lbf_pm.col(k);
                 }
             }
 
-            const Scalar maxlbf = stat.lbf_p.maxCoeff();
-            stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
-            stat.alpha_p /= stat.alpha_p.sum();
+            {
+                const Scalar maxlbf = stat.lbf_p.maxCoeff();
+                stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+                stat.alpha_p /= stat.alpha_p.sum();
+            }
+
+            {
+                const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
+                stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
+                stat.alpha0_p /= stat.alpha0_p.sum();
+            }
+
             nretain_old = nretain;
         } else {
             break;
@@ -129,6 +150,7 @@ template <typename STAT>
 void
 calibrate_lbf(STAT &stat)
 {
+    // N(0| b, v1 + v0) / N(0| b, v0)
     stat.lbf_pm = stat.mle_mean_pm.binaryExpr(stat.mle_var_pm, stat.lbf_op);
 }
 

@@ -42,6 +42,17 @@ NULL
 #' \item{loglik}{log-likelihood trace}
 #' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 #'
+#' In the `cs`, we have
+#' \item{variants}{variant indexes `[1 .. p]`}
+#' \item{traits}{trait indexes `[1 .. m]`}
+#' \item{levels}{levels `[1 .. L]`}
+#' \item{alpha}{shared PIP}
+#' \item{mean}{univariate mean}
+#' \item{var}{univariate var}
+#' \item{z}{univariate z-score}
+#' \item{lfsr}{local false sign rate}
+#' \item{lodds}{log-odds ratio}
+#'
 fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 5L, coverage = .9, tol = 1e-8, prior_var = 100.0, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE) {
     .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat)
 }

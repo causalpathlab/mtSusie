@@ -150,8 +150,13 @@ mt_susie_credible_sets(MODEL &model,
 //' \item{variants}{variant indexes `[1 .. p]`}
 //' \item{traits}{trait indexes `[1 .. m]`}
 //' \item{levels}{levels `[1 .. L]`}
-//' \item{}
-//' 
+//' \item{alpha}{shared PIP}
+//' \item{mean}{univariate mean}
+//' \item{var}{univariate var}
+//' \item{z}{univariate z-score}
+//' \item{lfsr}{local false sign rate}
+//' \item{lodds}{log-odds ratio}
+//'
 // [[Rcpp::export]]
 Rcpp::List
 fit_mt_susie(const Rcpp::NumericMatrix &x,
@@ -177,8 +182,11 @@ fit_mt_susie(const Rcpp::NumericMatrix &x,
 
     for (Index iter = 0; iter < max_iter; ++iter) {
 
-        const Scalar curr =
-            update_shared_regression(model, stat, xx, yy, lodds_cutoff);
+        const Scalar curr = update_shared_regression(model,
+                                                     stat,
+                                                     xx,
+                                                     yy,
+                                                     lodds_cutoff);
 
         if (iter >= min_iter) {
             const Scalar prev = loglik.at(loglik.size() - 1);

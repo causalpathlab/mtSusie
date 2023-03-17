@@ -30,6 +30,18 @@
 #' \item{L}{number of layers/levels}
 #' \item{loglik}{log-likelihood trace}
 #' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
+#'
+#' In the `cs`, we have
+#' \item{variants}{variant indexes `[1 .. p]`}
+#' \item{traits}{trait indexes `[1 .. m]`}
+#' \item{levels}{levels `[1 .. L]`}
+#' \item{alpha}{shared PIP}
+#' \item{mean}{univariate mean}
+#' \item{var}{univariate var}
+#' \item{z}{univariate z-score}
+#' \item{lfsr}{local false sign rate}
+#' \item{lodds}{log-odds ratio}
+#' 
 #' 
 #' @export
 #'
