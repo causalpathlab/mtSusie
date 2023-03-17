@@ -13,6 +13,23 @@
 #' @param min.pip.cutoff min PIP to report (default: 1/p)
 #' @param lodds.cutoff log-odds ratio cutoff for multitrait factors
 #' @param prior.var prior level variance
+#'
+#' @return a list of mtSusie estimates
+#' 
+#' \item{alpha}{Posterior probability of variant across `p x level`}
+#' \item{resid.var}{residual variance `level x traits`}
+#' \item{prior.var}{prior variance `1 x traits`}
+#' \item{log.odds}{log-odds ratio `level x traits`}
+#' \item{mu}{a list of `p x m` mean parameters}
+#' \item{var}{a list of `p x m` variance parameters}
+#' \item{lbf}{a list of `p x m` log-Bayes Factors}
+#' \item{z}{a list of `p x m` z-scores}
+#' \item{n}{number of samples}
+#' \item{m}{number of traits/outputs}
+#' \item{p}{number of variants}
+#' \item{L}{number of layers/levels}
+#' \item{loglik}{log-likelihood trace}
+#' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 #' 
 #' @export
 #'

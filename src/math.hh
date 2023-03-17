@@ -1,6 +1,6 @@
-#include "fastexp.h"
-#include "fastlog.h"
-#include "fastgamma.h"
+// #include "fastexp.h"
+// #include "fastlog.h"
+// #include "fastgamma.h"
 #include <cmath>
 
 #ifndef _UTIL_MATH_HH_
@@ -17,9 +17,9 @@ _softplus(const T x)
     const T cutoff = static_cast<T>(10.);
     const T one = static_cast<T>(1.0);
     if (x > cutoff) {
-        return x + fasterlog(one + fasterexp(-x));
+        return x + std::log(one + fasterexp(-x));
     }
-    return fasterlog(one + fasterexp(x));
+    return std::log(one + fasterexp(x));
 }
 
 /////////////////////
@@ -76,7 +76,7 @@ _log_bessel_i(const IDX p, const F x)
     const F _p = static_cast<F>(p);
 
     F N = static_cast<F>(3.0 * p);
-    const F log_x_half = fasterlog(x * 0.5);
+    const F log_x_half = std::log(x * 0.5);
 
     F log_sum_series = fasterlgamma(_p + 1.0);
 

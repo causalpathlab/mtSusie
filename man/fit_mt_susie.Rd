@@ -14,7 +14,8 @@ fit_mt_susie(
   tol = 1e-08,
   prior_var = 100,
   lodds_cutoff = 0,
-  min_pip_cutoff = NULL
+  min_pip_cutoff = NULL,
+  full_stat = TRUE
 )
 }
 \arguments{
@@ -31,12 +32,29 @@ fit_mt_susie(
 \item{tol}{tolerance}
 
 \item{prior_var}{prior variance}
+
+\item{lodds_cutoff}{log-odds cutoff in trait selection steps}
+
+\item{min_pip_cutoff}{minimum PIP cutoff in building credible sets}
+
+\item{full_stat}{keep full statistics}
 }
 \value{
 a list of mtSusie results
-
-\item{alpha}{Posterior probability of variant across k traits; \code{alpha[j,l]}}
-\item{resid.var}{Residual variance; \code{alpha[l,k]}}
+\item{alpha}{Posterior probability of variant across \verb{p x level}}
+\item{resid.var}{residual variance \verb{level x traits}}
+\item{prior.var}{prior variance \verb{1 x traits}}
+\item{log.odds}{log-odds ratio \verb{level x traits}}
+\item{mu}{a list of \verb{p x m} mean parameters}
+\item{var}{a list of \verb{p x m} variance parameters}
+\item{lbf}{a list of \verb{p x m} log-Bayes Factors}
+\item{z}{a list of \verb{p x m} z-scores}
+\item{n}{number of samples}
+\item{m}{number of traits/outputs}
+\item{p}{number of variants}
+\item{L}{number of layers/levels}
+\item{loglik}{log-likelihood trace}
+\item{cs}{credible sets (use \code{data.table::setDT} to assemble)}
 }
 \description{
 Estimate a multi-trait Sum of Single Effect regression model

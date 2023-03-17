@@ -3,7 +3,7 @@ title: "Multi-trait SuSiE"
 author: "Yongjin Park"
 ---
 
-How can we distinguish shared effects across multiple traits from trait-specific effects?  Inspired by [`susieR`](https://github.com/stephenslab/susieR), we extend the integrative single-effect estimation steps to a multi-trait problem. 
+How can we distinguish shared effects across multiple traits from trait-specific effects?  Inspired by [`susieR`](https://github.com/stephenslab/susieR), we extend the integrative single-effect estimation steps to a multi-trait problem.
 
 ### A toy example
 
@@ -21,7 +21,7 @@ h2 <- .2                                  # heritability/proportion of variance 
 X <- .rnorm(n, p)                         # this can be replaced with a real genotype matrix
 common <- sample(p, 1)                    # common effect across all the traits
 .theta <- .rnorm(length(common), m)       # the effect size may fluctuate
-y <- X[, common, drop = FALSE] %*% .theta # 
+y <- X[, common, drop = FALSE] %*% .theta #
 
 other <- c()
 for(k in 1:m){
@@ -95,25 +95,36 @@ Okay, it works well. However, it doesn't take full advantage of a multi-trait re
 
 ### Can we leverage the information shared across traits?
 
-Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is a simple modification to the original `susieR` method. For each level/layer, we aggregate the log Bayes Factors across multiple traits. Yes, it was that simple. 
+Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is a simple modification to the original `susieR` method. For each level/layer, we aggregate the log Bayes Factors across multiple traits. Yes, it was that simple.
 
 ```{r}
 library(mtSusie)
-mt.susie <- mt_susie(X, Y, clamp=8)
+mt.susie <- mt_susie(X, Y, clamp=NULL)
+```
+
+Which traits do we combine at each level?
+
+```{r fig.width=8, fig.height=3}
+.dt <- reshape2::melt(mt.susie$log.odds)
+ggplot(.dt, aes(Var1, Var2, fill=value)) +
+    geom_tile(colour="gray20", size=.1) +
+    xlab("levels") + ylab("traits") +
+    scale_fill_distiller(direction=1)
 ```
 
 ```{r fig.width=8, fig.height=5}
-mt.susie.dt <- data.table::setDT(mt.susie$cs)
+.dt <- reshape2::melt(mt.susie$alpha) %>%
+    filter(Var2 <= 10)
 
-plt <- ggplot(mt.susie.dt, aes(x = variants, y = alpha)) +
-    xlab("variants") + ylab("PIP") +
-    facet_wrap(.~traits, nrow = 2) +
-    geom_point(alpha=.8, colour="gray") +
-    geom_vline(xintercept = common, lty=2, color="green")    
+plt <-
+    ggplot(.dt, aes(Var1, value)) +
+    facet_wrap(.~Var2, nrow = 2) +
+    ylab("PIP") + xlab("variants") +
+    geom_point(colour="gray", size=2)
 
-.melt <- mt.susie.dt %>% filter(`variants` %in% common)
+.melt <- .dt %>% filter(`Var1` %in% common)
 plt <- plt + geom_point(data = .melt, color="red", pch=21, stroke=1)
-.melt <- mt.susie.dt %>% filter(`variants` %in% other)
+.melt <- .dt %>% filter(`Var1` %in% other)
 plt <- plt + geom_point(data = .melt, color="blue", pch=22, stroke=1)
 print(plt)
 ```
@@ -121,8 +132,9 @@ print(plt)
 Once we have identified a "union" of all the causal variants across all the traits, we can assign trait-specific effects based on variant-by-variant statistics at each level/layer. At each level, `mtSusie` will select a causal variant shared across traits, but not all the traits will support it and result in trait-specific local false sign rate (LFSR) values.
 
 ```{r fig.width=8, fig.height=3.5}
-.show <- unique(mt.susie.dt[alpha > .1]$variants)
-.dt <- mt.susie.dt[variants %in% .show]
+.dt <- data.table::setDT(mt.susie$cs)
+.show <- unique(.dt[alpha > .1]$variants)
+.dt <- .dt[variants %in% .show]
 
 ggplot(.dt, aes(x=as.factor(variants), y=as.factor(traits))) +
     facet_wrap(.~`levels`, scales="free", nrow=1) +
@@ -131,4 +143,3 @@ ggplot(.dt, aes(x=as.factor(variants), y=as.factor(traits))) +
     scale_size_continuous(range = c(0,5), "LFSR", labels=function(x) round(10^(-x), 3)) +
     scale_fill_gradient2("z-score", mid="white", high="red", low="blue")
 ```
-

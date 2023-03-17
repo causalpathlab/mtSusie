@@ -4,19 +4,31 @@
 //' @param model
 template <typename MODEL>
 Rcpp::List
-mt_susie_output(const MODEL &model)
+mt_susie_output(const MODEL &model, bool full_stat)
 {
-    return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
-                              Rcpp::_["resid.var"] = model.resid_var_lm,
-                              Rcpp::_["prior.var"] = model.prior_var,
-                              Rcpp::_["mu"] = model.mu_pm_list,
-                              Rcpp::_["var"] = model.var_pm_list,
-                              Rcpp::_["lbf"] = model.lbf_pm_list,
-                              Rcpp::_["z"] = model.z_pm_list,
-                              Rcpp::_["n"] = model.n,
-                              Rcpp::_["m"] = model.m,
-                              Rcpp::_["p"] = model.p,
-                              Rcpp::_["L"] = model.lvl);
+    if (full_stat) {
+        return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
+                                  Rcpp::_["resid.var"] = model.resid_var_lm,
+                                  Rcpp::_["prior.var"] = model.prior_var,
+                                  Rcpp::_["log.odds"] = model.lodds_lm,
+                                  Rcpp::_["mu"] = model.mu_pm_list,
+                                  Rcpp::_["var"] = model.var_pm_list,
+                                  Rcpp::_["lbf"] = model.lbf_pm_list,
+                                  Rcpp::_["z"] = model.z_pm_list,
+                                  Rcpp::_["n"] = model.n,
+                                  Rcpp::_["m"] = model.m,
+                                  Rcpp::_["p"] = model.p,
+                                  Rcpp::_["L"] = model.lvl);
+    } else {
+        return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
+                                  Rcpp::_["resid.var"] = model.resid_var_lm,
+                                  Rcpp::_["prior.var"] = model.prior_var,
+                                  Rcpp::_["log.odds"] = model.lodds_lm,
+                                  Rcpp::_["n"] = model.n,
+                                  Rcpp::_["m"] = model.m,
+                                  Rcpp::_["p"] = model.p,
+                                  Rcpp::_["L"] = model.lvl);
+    }
 }
 
 //' Calibrate credible sets per level
@@ -32,7 +44,8 @@ mt_susie_credible_sets(MODEL &model,
 {
     using svec = std::vector<Scalar>;
     using ivec = std::vector<Index>;
-    svec mean_list, var_list, lbf_list, alpha_list, z_list, lfsr_list;
+    svec mean_list, var_list, lbf_list, alpha_list, z_list;
+    svec lfsr_list, lodds_list;
     ivec variants, traits, levels;
 
     const Index p = model.p, m = model.m;
@@ -52,6 +65,7 @@ mt_susie_credible_sets(MODEL &model,
         Mat &var = model.get_var(l);
         Mat &lbf = model.get_lbf(l);
         Mat &zz = model.get_z(l);
+        Mat &lodds = model.lodds_lm;
 
         //////////////////////////////////////
         // Calibrate local false sign rates //
@@ -83,6 +97,7 @@ mt_susie_credible_sets(MODEL &model,
                 lbf_list.emplace_back(lbf(j, t));
                 z_list.emplace_back(zz(j, t));
                 lfsr_list.emplace_back(lfsr(t));
+                lodds_list.emplace_back(lodds(l, t));
             }
             if (cum > coverage)
                 break;
@@ -97,7 +112,8 @@ mt_susie_credible_sets(MODEL &model,
                               Rcpp::_["var"] = var_list,
                               Rcpp::_["lbf"] = lbf_list,
                               Rcpp::_["z"] = z_list,
-                              Rcpp::_["lfsr"] = lfsr_list);
+                              Rcpp::_["lfsr"] = lfsr_list,
+                              Rcpp::_["lodds"] = lodds_list);
 }
 
 //' Estimate a multi-trait Sum of Single Effect regression model
@@ -109,12 +125,33 @@ mt_susie_credible_sets(MODEL &model,
 //' @param min_iter   minimum iterations
 //' @param tol        tolerance
 //' @param prior_var  prior variance
+//' @param lodds_cutoff log-odds cutoff in trait selection steps
+//' @param min_pip_cutoff minimum PIP cutoff in building credible sets
+//' @param full_stat keep full statistics
+//'
 //'
 //' @return a list of mtSusie results
+//' \item{alpha}{Posterior probability of variant across `p x level`}
+//' \item{resid.var}{residual variance `level x traits`}
+//' \item{prior.var}{prior variance `1 x traits`}
+//' \item{log.odds}{log-odds ratio `level x traits`}
+//' \item{mu}{a list of `p x m` mean parameters}
+//' \item{var}{a list of `p x m` variance parameters}
+//' \item{lbf}{a list of `p x m` log-Bayes Factors}
+//' \item{z}{a list of `p x m` z-scores}
+//' \item{n}{number of samples}
+//' \item{m}{number of traits/outputs}
+//' \item{p}{number of variants}
+//' \item{L}{number of layers/levels}
+//' \item{loglik}{log-likelihood trace}
+//' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 //'
-//' \item{alpha}{Posterior probability of variant across k traits; `alpha[j,l]`}
-//' \item{resid.var}{Residual variance; `alpha[l,k]`}
-//'
+//' In the `cs`, we have
+//' \item{variants}{variant indexes `[1 .. p]`}
+//' \item{traits}{trait indexes `[1 .. m]`}
+//' \item{levels}{levels `[1 .. L]`}
+//' \item{}
+//' 
 // [[Rcpp::export]]
 Rcpp::List
 fit_mt_susie(const Rcpp::NumericMatrix &x,
@@ -126,7 +163,8 @@ fit_mt_susie(const Rcpp::NumericMatrix &x,
              const double tol = 1e-8,
              const double prior_var = 100.0,
              const double lodds_cutoff = 0,
-             Rcpp::Nullable<double> min_pip_cutoff = R_NilValue)
+             Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
+             const bool full_stat = true)
 {
 
     shared_regression_t model(y.rows(), y.cols(), x.cols(), levels, prior_var);
@@ -159,7 +197,7 @@ fit_mt_susie(const Rcpp::NumericMatrix &x,
         Rcpp::as<Scalar>(min_pip_cutoff) :
         (1. / static_cast<Scalar>(x.cols()));
 
-    Rcpp::List ret = mt_susie_output(model);
+    Rcpp::List ret = mt_susie_output(model, full_stat);
     ret["loglik"] = loglik;
     ret["cs"] = mt_susie_credible_sets(model, coverage, _pip_cutoff);
     return ret;

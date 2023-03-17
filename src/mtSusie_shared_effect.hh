@@ -58,7 +58,7 @@ struct shared_effect_stat_t {
             if (!std::isfinite(s2) || s2 <= tol) { // ignore infinte s2
                 return 0;                          // also zero s2
             }
-            Scalar stuff1 = fasterlog(1. + v0 / s2);
+            Scalar stuff1 = std::log1p(v0 / s2);
             Scalar stuff2 = b * b / s2 - b * b / (s2 + v0);
             return 0.5 * (stuff2 - stuff1);
         }

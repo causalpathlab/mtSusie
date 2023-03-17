@@ -47,19 +47,19 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mt_susie</span><span class="op">(</span></span>
-<span>  <span class="va">X</span>,</span>
-<span>  <span class="va">Y</span>,</span>
-<span>  L <span class="op">=</span> <span class="fl">15</span>,</span>
-<span>  clamp <span class="op">=</span> <span class="fl">4</span>,</span>
-<span>  max.iter <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>  min.iter <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
-<span>  coverage <span class="op">=</span> <span class="fl">0.9</span>,</span>
-<span>  min.pip.cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  lodds.cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  prior.var <span class="op">=</span> <span class="fl">100</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">mt_susie</span><span class="op">(</span>
+  <span class="va">X</span>,
+  <span class="va">Y</span>,
+  L <span class="op">=</span> <span class="fl">15</span>,
+  clamp <span class="op">=</span> <span class="fl">4</span>,
+  max.iter <span class="op">=</span> <span class="fl">100</span>,
+  min.iter <span class="op">=</span> <span class="fl">5</span>,
+  tol <span class="op">=</span> <span class="fl">1e-08</span>,
+  coverage <span class="op">=</span> <span class="fl">0.9</span>,
+  min.pip.cutoff <span class="op">=</span> <span class="cn">NULL</span>,
+  lodds.cutoff <span class="op">=</span> <span class="fl">0</span>,
+  prior.var <span class="op">=</span> <span class="fl">100</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -108,6 +108,54 @@
 <dd><p>prior level variance</p></dd>
 
 </dl></div>
+    <div id="value">
+    <h2>Value</h2>
+    
+
+<p>a list of mtSusie estimates</p>
+<dl><dt>alpha</dt>
+<dd><p>Posterior probability of variant across <code>p x level</code></p></dd>
+
+<dt>resid.var</dt>
+<dd><p>residual variance <code>level x traits</code></p></dd>
+
+<dt>prior.var</dt>
+<dd><p>prior variance <code>1 x traits</code></p></dd>
+
+<dt>log.odds</dt>
+<dd><p>log-odds ratio <code>level x traits</code></p></dd>
+
+<dt>mu</dt>
+<dd><p>a list of <code>p x m</code> mean parameters</p></dd>
+
+<dt>var</dt>
+<dd><p>a list of <code>p x m</code> variance parameters</p></dd>
+
+<dt>lbf</dt>
+<dd><p>a list of <code>p x m</code> log-Bayes Factors</p></dd>
+
+<dt>z</dt>
+<dd><p>a list of <code>p x m</code> z-scores</p></dd>
+
+<dt>n</dt>
+<dd><p>number of samples</p></dd>
+
+<dt>m</dt>
+<dd><p>number of traits/outputs</p></dd>
+
+<dt>p</dt>
+<dd><p>number of variants</p></dd>
+
+<dt>L</dt>
+<dd><p>number of layers/levels</p></dd>
+
+<dt>loglik</dt>
+<dd><p>log-likelihood trace</p></dd>
+
+<dt>cs</dt>
+<dd><p>credible sets (use <code><a href="https://Rdatatable.gitlab.io/data.table/reference/setDT.html" class="external-link">data.table::setDT</a></code> to assemble)</p></dd>
+
+</dl></div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -121,7 +169,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

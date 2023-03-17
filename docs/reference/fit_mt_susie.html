@@ -47,18 +47,19 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fit_mt_susie</span><span class="op">(</span></span>
-<span>  <span class="va">x</span>,</span>
-<span>  <span class="va">y</span>,</span>
-<span>  levels <span class="op">=</span> <span class="fl">15L</span>,</span>
-<span>  max_iter <span class="op">=</span> <span class="fl">100L</span>,</span>
-<span>  min_iter <span class="op">=</span> <span class="fl">5L</span>,</span>
-<span>  coverage <span class="op">=</span> <span class="fl">0.9</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
-<span>  prior_var <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>  lodds_cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  min_pip_cutoff <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">fit_mt_susie</span><span class="op">(</span>
+  <span class="va">x</span>,
+  <span class="va">y</span>,
+  levels <span class="op">=</span> <span class="fl">15L</span>,
+  max_iter <span class="op">=</span> <span class="fl">100L</span>,
+  min_iter <span class="op">=</span> <span class="fl">5L</span>,
+  coverage <span class="op">=</span> <span class="fl">0.9</span>,
+  tol <span class="op">=</span> <span class="fl">1e-08</span>,
+  prior_var <span class="op">=</span> <span class="fl">100</span>,
+  lodds_cutoff <span class="op">=</span> <span class="fl">0</span>,
+  min_pip_cutoff <span class="op">=</span> <span class="cn">NULL</span>,
+  full_stat <span class="op">=</span> <span class="cn">TRUE</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -90,6 +91,18 @@
 <dt>prior_var</dt>
 <dd><p>prior variance</p></dd>
 
+
+<dt>lodds_cutoff</dt>
+<dd><p>log-odds cutoff in trait selection steps</p></dd>
+
+
+<dt>min_pip_cutoff</dt>
+<dd><p>minimum PIP cutoff in building credible sets</p></dd>
+
+
+<dt>full_stat</dt>
+<dd><p>keep full statistics</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -97,10 +110,46 @@
 
 <p>a list of mtSusie results</p>
 <dl><dt>alpha</dt>
-<dd><p>Posterior probability of variant across k traits; <code>alpha[j,l]</code></p></dd>
+<dd><p>Posterior probability of variant across <code>p x level</code></p></dd>
 
 <dt>resid.var</dt>
-<dd><p>Residual variance; <code>alpha[l,k]</code></p></dd>
+<dd><p>residual variance <code>level x traits</code></p></dd>
+
+<dt>prior.var</dt>
+<dd><p>prior variance <code>1 x traits</code></p></dd>
+
+<dt>log.odds</dt>
+<dd><p>log-odds ratio <code>level x traits</code></p></dd>
+
+<dt>mu</dt>
+<dd><p>a list of <code>p x m</code> mean parameters</p></dd>
+
+<dt>var</dt>
+<dd><p>a list of <code>p x m</code> variance parameters</p></dd>
+
+<dt>lbf</dt>
+<dd><p>a list of <code>p x m</code> log-Bayes Factors</p></dd>
+
+<dt>z</dt>
+<dd><p>a list of <code>p x m</code> z-scores</p></dd>
+
+<dt>n</dt>
+<dd><p>number of samples</p></dd>
+
+<dt>m</dt>
+<dd><p>number of traits/outputs</p></dd>
+
+<dt>p</dt>
+<dd><p>number of variants</p></dd>
+
+<dt>L</dt>
+<dd><p>number of layers/levels</p></dd>
+
+<dt>loglik</dt>
+<dd><p>log-likelihood trace</p></dd>
+
+<dt>cs</dt>
+<dd><p>credible sets (use <code><a href="https://Rdatatable.gitlab.io/data.table/reference/setDT.html" class="external-link">data.table::setDT</a></code> to assemble)</p></dd>
 
 </dl></div>
 
@@ -116,7 +165,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

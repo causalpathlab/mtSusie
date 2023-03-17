@@ -23,6 +23,7 @@ struct shared_regression_t {
         , partial_nm(num_sample, num_output)
         , prior_var(levels)
         , temp_m(num_output)
+        , lodds_lm(levels, num_output)
     {
         shared_pip_pl.setZero();
         fitted_nm.setZero();
@@ -43,6 +44,7 @@ struct shared_regression_t {
     Mat partial_nm;
     RowVec prior_var;
     RowVec temp_m;
+    Mat lodds_lm;
 
     mat_vec_t mu_pm_list;
     mat_vec_t var_pm_list;
@@ -171,6 +173,7 @@ update_shared_regression(MODEL &model,
         model.set_z(l,
                     stat.mle_mean_pm.cwiseQuotient(
                         stat.mle_var_pm.cwiseSqrt()));
+        model.lodds_lm.row(l) = stat.lodds_m;
 
         XY_safe(X,
                 (model.get_mean(l).array().colwise() *

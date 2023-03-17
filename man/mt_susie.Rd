@@ -41,6 +41,24 @@ mt_susie(
 
 \item{prior.var}{prior level variance}
 }
+\value{
+a list of mtSusie estimates
+
+\item{alpha}{Posterior probability of variant across \verb{p x level}}
+\item{resid.var}{residual variance \verb{level x traits}}
+\item{prior.var}{prior variance \verb{1 x traits}}
+\item{log.odds}{log-odds ratio \verb{level x traits}}
+\item{mu}{a list of \verb{p x m} mean parameters}
+\item{var}{a list of \verb{p x m} variance parameters}
+\item{lbf}{a list of \verb{p x m} log-Bayes Factors}
+\item{z}{a list of \verb{p x m} z-scores}
+\item{n}{number of samples}
+\item{m}{number of traits/outputs}
+\item{p}{number of variants}
+\item{L}{number of layers/levels}
+\item{loglik}{log-likelihood trace}
+\item{cs}{credible sets (use \code{data.table::setDT} to assemble)}
+}
 \description{
 Fit multi-trait SuSiE across several regression models
 }

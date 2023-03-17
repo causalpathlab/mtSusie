@@ -21,13 +21,28 @@ NULL
 #' @param min_iter   minimum iterations
 #' @param tol        tolerance
 #' @param prior_var  prior variance
+#' @param lodds_cutoff log-odds cutoff in trait selection steps
+#' @param min_pip_cutoff minimum PIP cutoff in building credible sets
+#' @param full_stat keep full statistics
+#'
 #'
 #' @return a list of mtSusie results
+#' \item{alpha}{Posterior probability of variant across `p x level`}
+#' \item{resid.var}{residual variance `level x traits`}
+#' \item{prior.var}{prior variance `1 x traits`}
+#' \item{log.odds}{log-odds ratio `level x traits`}
+#' \item{mu}{a list of `p x m` mean parameters}
+#' \item{var}{a list of `p x m` variance parameters}
+#' \item{lbf}{a list of `p x m` log-Bayes Factors}
+#' \item{z}{a list of `p x m` z-scores}
+#' \item{n}{number of samples}
+#' \item{m}{number of traits/outputs}
+#' \item{p}{number of variants}
+#' \item{L}{number of layers/levels}
+#' \item{loglik}{log-likelihood trace}
+#' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 #'
-#' \item{alpha}{Posterior probability of variant across k traits; `alpha[j,l]`}
-#' \item{resid.var}{Residual variance; `alpha[l,k]`}
-#'
-fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 5L, coverage = .9, tol = 1e-8, prior_var = 100.0, lodds_cutoff = 0, min_pip_cutoff = NULL) {
-    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff)
+fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 5L, coverage = .9, tol = 1e-8, prior_var = 100.0, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE) {
+    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat)
 }
 
