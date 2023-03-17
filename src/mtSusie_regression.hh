@@ -19,7 +19,7 @@ struct shared_regression_t {
         , lvl(levels)
         , shared_pip_pl(num_feature, levels)
         , fitted_nm(num_sample, num_output)
-        , resid_var_lm(levels, num_output)
+        , residvar_lm(levels, num_output)
         , partial_nm(num_sample, num_output)
         , prior_var(levels)
         , temp_m(num_output)
@@ -27,7 +27,7 @@ struct shared_regression_t {
     {
         shared_pip_pl.setZero();
         fitted_nm.setZero();
-        resid_var_lm.setOnes();
+        residvar_lm.setOnes();
         prior_var.setConstant(vv);
 
         fill_mat_vec(mu_pm_list, lvl, p, m);
@@ -40,7 +40,7 @@ struct shared_regression_t {
 
     Mat shared_pip_pl;
     Mat fitted_nm;
-    Mat resid_var_lm;
+    Mat residvar_lm;
     Mat partial_nm;
     RowVec prior_var;
     RowVec temp_m;
@@ -124,6 +124,60 @@ private:
     }
 };
 
+template <typename MODEL, typename Derived, typename Derived2>
+void
+discount_model_stat(MODEL &model,
+                    const Eigen::MatrixBase<Derived> &X,
+                    const Eigen::MatrixBase<Derived2> &Y,
+                    const Index l)
+{
+    XY_safe(X,
+            (model.get_mean(l).array().colwise() *
+             model.shared_pip_pl.col(l).array())
+                .matrix(),
+            model.partial_nm);
+
+    model.fitted_nm -= model.partial_nm;
+
+    // Take partial residuals
+    model.partial_nm = Y - model.fitted_nm;
+}
+
+template <typename MODEL>
+void
+calibrate_residual_variance(MODEL &model, const Index l)
+{
+    // Calibrate variance
+    colsum_safe(model.partial_nm.cwiseProduct(model.partial_nm), model.temp_m);
+    const Scalar nn = static_cast<Scalar>(model.n);
+    model.residvar_lm.row(l) = model.temp_m / nn;
+}
+
+template <typename MODEL, typename Derived, typename STAT>
+void
+update_model_stat(MODEL &model,
+                  const Eigen::MatrixBase<Derived> &X,
+                  STAT &stat,
+                  const Index l)
+{
+    model.shared_pip_pl.col(l) = stat.alpha_p;
+    model.set_mean(l, stat.post_mean_pm);
+    model.set_var(l, stat.post_var_pm);
+    model.set_lbf(l, stat.lbf_pm);
+    model.prior_var(l) = stat.v0;
+    model.set_z(l, stat.mle_mean_pm.cwiseQuotient(stat.mle_var_pm.cwiseSqrt()));
+
+    model.lodds_lm.row(l) = stat.lodds_m;
+
+    XY_safe(X,
+            (model.get_mean(l).array().colwise() *
+             model.shared_pip_pl.col(l).array())
+                .matrix(),
+            model.partial_nm);
+
+    model.fitted_nm += model.partial_nm;
+}
+
 template <typename MODEL, typename STAT, typename Derived1, typename Derived2>
 Scalar
 update_shared_regression(MODEL &model,
@@ -132,59 +186,20 @@ update_shared_regression(MODEL &model,
                          const Eigen::MatrixBase<Derived2> &Y,
                          const Scalar lodds_cutoff = 0)
 {
-    Scalar llik = 0;
+    Scalar llik = 0, llik_;
     const Index L = model.lvl;
 
     for (Index l = 0; l < L; ++l) {
-
-        // 1. Remove l-th effect from the fitted values
-        XY_safe(X,
-                (model.get_mean(l).array().colwise() *
-                 model.shared_pip_pl.col(l).array())
-                    .matrix(),
-                model.partial_nm);
-
-        model.fitted_nm -= model.partial_nm;
-
-        // 2. Take partial residuals
-        model.partial_nm = Y - model.fitted_nm;
-        const Scalar v0 = model.get_v0(l);
-
-        // 3. Update by shared "single" effect regression
-        colsum_safe(model.partial_nm.cwiseProduct(model.partial_nm),
-                    model.temp_m);
-
-        const Scalar nn = static_cast<Scalar>(model.n);
-        model.resid_var_lm.row(l) = model.temp_m / nn;
-
-        Scalar llik_l = fit_single_effect_shared(X,
-                                                 model.partial_nm,
-                                                 model.resid_var_lm.row(l),
-                                                 v0,
-                                                 stat,
-                                                 lodds_cutoff);
-
-        // 4. Put back the updated statistics
-        model.shared_pip_pl.col(l) = stat.alpha_p;
-        model.set_mean(l, stat.post_mean_pm);
-        model.set_var(l, stat.post_var_pm);
-        model.set_lbf(l, stat.lbf_pm);
-        model.prior_var(l) = stat.v0;
-        model.set_z(l,
-                    stat.mle_mean_pm.cwiseQuotient(
-                        stat.mle_var_pm.cwiseSqrt()));
-        model.lodds_lm.row(l) = stat.lodds_m;
-
-        XY_safe(X,
-                (model.get_mean(l).array().colwise() *
-                 model.shared_pip_pl.col(l).array())
-                    .matrix(),
-                model.partial_nm);
-
-        model.fitted_nm += model.partial_nm;
-
-        llik += llik_l;
-        // TLOG("level: [" << l << "] " << llik_l);
+        discount_model_stat(model, X, Y, l);   // 1. discount previous l-th
+        calibrate_residual_variance(model, l); // 2. calibrate variance
+        llik_ = SER(X,                         // 3. single-effect regression
+                    model.partial_nm,          //   - partial prediction
+                    model.residvar_lm.row(l),  //   - residual variance
+                    model.get_v0(l),           //   - prior variance
+                    stat,                      //   - statistics
+                    lodds_cutoff);             //   - log-odds cutoff
+        update_model_stat(model, X, stat, l);  // Put back the updated results
+        llik += llik_;                         // log-likelihood
     }
 
     return llik;

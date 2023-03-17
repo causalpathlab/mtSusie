@@ -2,18 +2,6 @@
 #include <Rcpp.h>
 // [[Rcpp::depends(RcppEigen)]]
 #include <RcppEigen.h>
-// [[Rcpp::depends(RcppProgress)]]
-
-// [[Rcpp::plugins(openmp)]]
-#include <omp.h>
-
-// [[Rcpp::depends(dqrng, sitmo, BH)]]
-#include <dqrng.h>
-#include <dqrng_distribution.h>
-#include <boost/random/binomial_distribution.hpp>
-#include <boost/random/poisson_distribution.hpp>
-#include <boost/random/gamma_distribution.hpp>
-#include <xoshiro.h>
 
 #include <iomanip>
 #include <iostream>
@@ -38,6 +26,7 @@ extern "C" {
 
 #include "bgzf.h"
 #include "kstring.h"
+#include "tabix.h"
 
 #ifdef __cplusplus
 }
@@ -59,6 +48,9 @@ using IntMat = typename Eigen::
 using IntVec = typename Eigen::Matrix<std::ptrdiff_t, Eigen::Dynamic, 1>;
 
 #include "mtSusie_util.hh"
+#include "mtSusie_rcpp_util.hh"
 #include "mtSusie_shared_effect.hh"
 #include "mtSusie_regression.hh"
+#include "mtSusie_interaction_regression.hh"
+
 #endif

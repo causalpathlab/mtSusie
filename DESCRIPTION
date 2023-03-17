@@ -2,13 +2,13 @@ Package: mtSusie
 Type: Package
 Title: mtSusie
 Version: 0.1
-Date: 2023-01-23
+Date: 2023-03-17
 Authors@R: person("Yongjin", "Park", role = c("aut", "cre"), email = "ypp@stat.ubc.ca")
 Maintainer: Yongjin Park <ypp@stat.ubc.ca>
 Description: mtSusie
 License: MIT License
-Imports: Rcpp, RcppEigen, dqrng, sitmo, BH
-LinkingTo: Rcpp, RcppEigen, dqrng, sitmo, BH
+Imports: Rcpp, RcppEigen
+LinkingTo: Rcpp, RcppEigen
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3

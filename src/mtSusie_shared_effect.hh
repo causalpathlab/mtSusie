@@ -101,6 +101,10 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
         stat.alpha_p /= stat.alpha_p.sum();
     }
 
+    if (stat.m == 1) { // single output
+        return 1;      // nothing to do
+    }
+
     const Index m = stat.lodds_m.size();
     Index nretain = m, nretain_old = m;
 
@@ -241,12 +245,12 @@ template <typename Derived1,
           typename Derived3,
           typename STAT>
 Scalar
-fit_single_effect_shared(const Eigen::MatrixBase<Derived1> &X,
-                         const Eigen::MatrixBase<Derived2> &Y,
-                         const Eigen::MatrixBase<Derived3> &resid_var_m,
-                         const Scalar v0,
-                         STAT &stat,
-                         const Scalar lodds_cutoff = 0)
+SER(const Eigen::MatrixBase<Derived1> &X,
+    const Eigen::MatrixBase<Derived2> &Y,
+    const Eigen::MatrixBase<Derived3> &resid_var_m,
+    const Scalar v0,
+    STAT &stat,
+    const Scalar lodds_cutoff = 0)
 {
     set_prior_var(stat, v0);
 

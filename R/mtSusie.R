@@ -80,6 +80,8 @@ mt_susie <- function(X, Y, L=15,
                                  lodds_cutoff = lodds.cutoff,
                                  min_pip_cutoff = min.pip.cutoff)
 
+## TODO: include permuted Y to control Type-I errors across multiple genes
+
     message("Done")
     return(ret)
 }
