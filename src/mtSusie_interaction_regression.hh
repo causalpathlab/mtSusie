@@ -12,7 +12,7 @@ update_shared_interaction_regression(MODEL &model,
                                      const Eigen::MatrixBase<Derived1> &X,
                                      const Eigen::MatrixBase<Derived2> &Y,
                                      const Eigen::MatrixBase<Derived3> &W,
-                                     const std::vector<Index> &interaction,
+                                     const std::vector<int> &interaction,
                                      const Index levels_per_inter,
                                      const Scalar lodds_cutoff = 0)
 

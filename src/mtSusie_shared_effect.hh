@@ -93,6 +93,11 @@ template <typename STAT>
 Index
 calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
 {
+    const Index m = stat.lodds_m.size();
+    Index nretain = m, nretain_old = m;
+    const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
+    stat.alpha0_p.setConstant(p0);
+
     // a. Initialization of shared PIP
     {
         stat.lbf_p = stat.lbf_pm.rowwise().sum();
@@ -102,14 +107,9 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
     }
 
     if (stat.m == 1) { // single output
-        return 1;      // nothing to do
+        stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
+        return nretain; // nothing to do
     }
-
-    const Index m = stat.lodds_m.size();
-    Index nretain = m, nretain_old = m;
-
-    const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
-    stat.alpha0_p.setConstant(p0);
 
     for (Index inner = 0; inner < m; ++inner) {
         // b. Determine which outputs to include

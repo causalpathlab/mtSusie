@@ -6,14 +6,14 @@
 #include "math.hh"
 #include "util.hh"
 
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/binomial_distribution.hpp>
-#include <boost/random/poisson_distribution.hpp>
-#include <boost/random/gamma_distribution.hpp>
-#include <boost/random/discrete_distribution.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
-#include <boost/random/uniform_01.hpp>
+// #include <boost/random/normal_distribution.hpp>
+// #include <boost/random/binomial_distribution.hpp>
+// #include <boost/random/poisson_distribution.hpp>
+// #include <boost/random/gamma_distribution.hpp>
+// #include <boost/random/discrete_distribution.hpp>
+// #include <boost/random/uniform_int_distribution.hpp>
+// #include <boost/random/uniform_real_distribution.hpp>
+// #include <boost/random/uniform_01.hpp>
 
 #ifndef EIGEN_UTIL_HH_
 #define EIGEN_UTIL_HH_
@@ -78,113 +78,113 @@ struct softmax_op_t {
     } exp_op;
 };
 
-template <typename T, typename RNG>
-struct rowvec_sampler_t {
-    using Scalar = typename T::Scalar;
-    using Index = typename T::Index;
+// template <typename T, typename RNG>
+// struct rowvec_sampler_t {
+//     using Scalar = typename T::Scalar;
+//     using Index = typename T::Index;
 
-    using disc_distrib = boost::random::discrete_distribution<>;
-    using disc_param = disc_distrib::param_type;
-    using RowVec = typename Eigen::internal::plain_row_type<T>::type;
+//     using disc_distrib = boost::random::discrete_distribution<>;
+//     using disc_param = disc_distrib::param_type;
+//     using RowVec = typename Eigen::internal::plain_row_type<T>::type;
 
-    explicit rowvec_sampler_t(RNG &_rng, const Index k)
-        : rng(_rng)
-        , K(k)
-        , _prob(k)
-    {
-    }
+//     explicit rowvec_sampler_t(RNG &_rng, const Index k)
+//         : rng(_rng)
+//         , K(k)
+//         , _prob(k)
+//     {
+//     }
 
-    inline Index operator()(const RowVec &prob)
-    {
-        Eigen::Map<RowVec>(&_prob[0], 1, K) = prob;
-        return _rdisc(rng, disc_param(_prob));
-    }
+//     inline Index operator()(const RowVec &prob)
+//     {
+//         Eigen::Map<RowVec>(&_prob[0], 1, K) = prob;
+//         return _rdisc(rng, disc_param(_prob));
+//     }
 
-    RNG &rng;
-    const Index K;
-    std::vector<Scalar> _prob;
-    disc_distrib _rdisc;
-};
+//     RNG &rng;
+//     const Index K;
+//     std::vector<Scalar> _prob;
+//     disc_distrib _rdisc;
+// };
 
-template <typename T, typename RNG>
-struct matrix_sampler_t {
+// template <typename T, typename RNG>
+// struct matrix_sampler_t {
 
-    using disc_distrib = boost::random::discrete_distribution<>;
-    using disc_param = disc_distrib::param_type;
+//     using disc_distrib = boost::random::discrete_distribution<>;
+//     using disc_param = disc_distrib::param_type;
 
-    using Scalar = typename T::Scalar;
-    using Index = typename T::Index;
+//     using Scalar = typename T::Scalar;
+//     using Index = typename T::Index;
 
-    using IndexVec = std::vector<Index>;
+//     using IndexVec = std::vector<Index>;
 
-    explicit matrix_sampler_t(RNG &_rng, const Index k)
-        : rng(_rng)
-        , K(k)
-        , _weights(k)
-        , _rdisc(_weights)
-    {
-    }
+//     explicit matrix_sampler_t(RNG &_rng, const Index k)
+//         : rng(_rng)
+//         , K(k)
+//         , _weights(k)
+//         , _rdisc(_weights)
+//     {
+//     }
 
-    template <typename Derived>
-    const IndexVec &sample(const Eigen::MatrixBase<Derived> &W)
-    {
-        using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
-        check_size(W);
+//     template <typename Derived>
+//     const IndexVec &sample(const Eigen::MatrixBase<Derived> &W)
+//     {
+//         using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
+//         check_size(W);
 
-        for (Index g = 0; g < W.rows(); ++g) {
-            Eigen::Map<ROW>(&_weights[0], 1, K) = W.row(g);
-            _sampled[g] = _rdisc(rng, disc_param(_weights));
-        }
-        return _sampled;
-    }
+//         for (Index g = 0; g < W.rows(); ++g) {
+//             Eigen::Map<ROW>(&_weights[0], 1, K) = W.row(g);
+//             _sampled[g] = _rdisc(rng, disc_param(_weights));
+//         }
+//         return _sampled;
+//     }
 
-    template <typename Derived>
-    const IndexVec &sample_logit(const Eigen::MatrixBase<Derived> &W)
-    {
-        using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
-        check_size(W);
+//     template <typename Derived>
+//     const IndexVec &sample_logit(const Eigen::MatrixBase<Derived> &W)
+//     {
+//         using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
+//         check_size(W);
 
-        for (Index g = 0; g < W.rows(); ++g) {
-            Eigen::Map<ROW>(&_weights[0], 1, K) = softmax.apply_row(W.row(g));
-            _sampled[g] = _rdisc(rng, disc_param(_weights));
-        }
-        return _sampled;
-    }
+//         for (Index g = 0; g < W.rows(); ++g) {
+//             Eigen::Map<ROW>(&_weights[0], 1, K) = softmax.apply_row(W.row(g));
+//             _sampled[g] = _rdisc(rng, disc_param(_weights));
+//         }
+//         return _sampled;
+//     }
 
-    template <typename Derived>
-    const IndexVec &operator()(const Eigen::MatrixBase<Derived> &W)
-    {
-        return sample(W);
-    }
+//     template <typename Derived>
+//     const IndexVec &operator()(const Eigen::MatrixBase<Derived> &W)
+//     {
+//         return sample(W);
+//     }
 
-    template <typename Derived>
-    void check_size(const Eigen::MatrixBase<Derived> &W)
-    {
-        if (W.rows() != _sampled.size())
-            _sampled.resize(W.rows());
+//     template <typename Derived>
+//     void check_size(const Eigen::MatrixBase<Derived> &W)
+//     {
+//         if (W.rows() != _sampled.size())
+//             _sampled.resize(W.rows());
 
-        if (W.cols() != _weights.size())
-            _weights.resize(W.cols());
-    }
+//         if (W.cols() != _weights.size())
+//             _weights.resize(W.cols());
+//     }
 
-    const IndexVec &sampled() const { return _sampled; }
+//     const IndexVec &sampled() const { return _sampled; }
 
-    void copy_to(IndexVec &dst) const
-    {
-        if (dst.size() != _sampled.size())
-            dst.resize(_sampled.size());
+//     void copy_to(IndexVec &dst) const
+//     {
+//         if (dst.size() != _sampled.size())
+//             dst.resize(_sampled.size());
 
-        std::copy(std::begin(_sampled), std::end(_sampled), std::begin(dst));
-    }
+//         std::copy(std::begin(_sampled), std::end(_sampled), std::begin(dst));
+//     }
 
-    RNG &rng;
-    const Index K;
-    std::vector<Scalar> _weights;
-    disc_distrib _rdisc;
-    IndexVec _sampled;
+//     RNG &rng;
+//     const Index K;
+//     std::vector<Scalar> _weights;
+//     disc_distrib _rdisc;
+//     IndexVec _sampled;
 
-    softmax_op_t<T> softmax;
-};
+//     softmax_op_t<T> softmax;
+// };
 
 template <typename EigenVec>
 inline auto

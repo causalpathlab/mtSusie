@@ -43,14 +43,17 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix &x,
 
     const Index L = model.lvl;
     const Index K = ww.cols();
-    std::vector<Index> interaction(L);
+    std::vector<int> interaction(L);
     for (Index l = 0; l < L; ++l) {
         if (l < (levels_per_inter * K)) {
-            const Index k = l % ww.cols();
+            const Index k = std::floor(l / levels_per_inter);
             interaction[l] = k; // it's an interaction term with k-th var.
         } else {
             interaction[l] = -1; // not an interaction term
         }
+
+        TLOG("level [" << l << "] using "
+                       << " interaction term " << interaction[l]);
     }
 
     TLOG(K << " interaction variables, total " << L << " levels");
@@ -81,7 +84,7 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix &x,
 
     TLOG("Exporting model estimation results");
 
-    using ivec = std::vector<Index>;
+    using ivec = std::vector<int>;
     Rcpp::List ret = mt_susie_output(model, full_stat);
 
     {
