@@ -10,7 +10,7 @@ mt_susie_output(const MODEL &model, bool full_stat)
 {
     if (full_stat) {
         return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
-                                  Rcpp::_["resid.var"] = model.residvar_lm,
+                                  Rcpp::_["resid.var"] = model.residvar_m,
                                   Rcpp::_["prior.var"] = model.prior_var,
                                   Rcpp::_["log.odds"] = model.lodds_lm,
                                   Rcpp::_["mu"] = model.mu_pm_list,
@@ -23,7 +23,7 @@ mt_susie_output(const MODEL &model, bool full_stat)
                                   Rcpp::_["L"] = model.lvl);
     } else {
         return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
-                                  Rcpp::_["resid.var"] = model.residvar_lm,
+                                  Rcpp::_["resid.var"] = model.residvar_m,
                                   Rcpp::_["prior.var"] = model.prior_var,
                                   Rcpp::_["log.odds"] = model.lodds_lm,
                                   Rcpp::_["n"] = model.n,

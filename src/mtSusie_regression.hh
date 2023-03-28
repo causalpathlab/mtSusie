@@ -19,15 +19,15 @@ struct shared_regression_t {
         , lvl(levels)
         , shared_pip_pl(num_feature, levels)
         , fitted_nm(num_sample, num_output)
-        , residvar_lm(levels, num_output)
+        , residvar_m(num_output)
         , partial_nm(num_sample, num_output)
         , prior_var(levels)
-        , temp_m(num_output)
+        , temp_m(1, num_output)
         , lodds_lm(levels, num_output)
     {
         shared_pip_pl.setZero();
         fitted_nm.setZero();
-        residvar_lm.setOnes();
+        residvar_m.setOnes();
         prior_var.setConstant(vv);
 
         fill_mat_vec(mu_pm_list, lvl, p, m);
@@ -40,7 +40,7 @@ struct shared_regression_t {
 
     Mat shared_pip_pl;
     Mat fitted_nm;
-    Mat residvar_lm;
+    RowVec residvar_m;
     Mat partial_nm;
     RowVec prior_var;
     RowVec temp_m;
@@ -143,14 +143,35 @@ discount_model_stat(MODEL &model,
     model.partial_nm = Y - model.fitted_nm;
 }
 
-template <typename MODEL>
+template <typename MODEL, typename Derived>
 void
-calibrate_residual_variance(MODEL &model, const Index l)
+calibrate_residual_variance(MODEL &model,
+                            const Eigen::MatrixBase<Derived> &X,
+                            const Eigen::MatrixBase<Derived> &Y,
+                            const Scalar eps = 1e-4)
 {
-    // Calibrate variance
-    colsum_safe(model.partial_nm.cwiseProduct(model.partial_nm), model.temp_m);
-    const Scalar nn = static_cast<Scalar>(model.n);
-    model.residvar_lm.row(l) = model.temp_m / nn;
+
+    // Expected R2 value for each output
+    // (Y - X * E[theta])^2
+    const Scalar nn = X.rows();
+    colsum_safe((Y - model.fitted_nm).cwiseProduct(Y - model.fitted_nm),
+                model.residvar_m);
+
+    // X^2 * V[theta]
+    for (Index l = 0; l < model.lvl; ++l) {
+        const Mat &var = model.get_var(l); // p x m
+
+        colsum_safe(X.cwiseProduct(X) *
+                        ((var.cwiseProduct(var)).array() *
+                         model.shared_pip_pl.array().col(l))
+                            .matrix(),
+                    model.temp_m);
+
+        model.residvar_m += model.temp_m;
+    }
+
+    model.residvar_m = model.residvar_m / nn;
+    model.residvar_m.array() += eps;
 }
 
 template <typename MODEL, typename Derived, typename STAT>
@@ -178,29 +199,34 @@ update_model_stat(MODEL &model,
     model.fitted_nm += model.partial_nm;
 }
 
-template <typename MODEL, typename STAT, typename Derived1, typename Derived2>
+template <typename MODEL, typename STAT, typename Derived>
 Scalar
 update_shared_regression(MODEL &model,
                          STAT &stat,
-                         const Eigen::MatrixBase<Derived1> &X,
-                         const Eigen::MatrixBase<Derived2> &Y,
+                         const Eigen::MatrixBase<Derived> &X,
+                         const Eigen::MatrixBase<Derived> &Y,
                          const Scalar lodds_cutoff = 0)
 {
     Scalar llik = 0, llik_;
     const Index L = model.lvl;
 
     for (Index l = 0; l < L; ++l) {
-        discount_model_stat(model, X, Y, l);   // 1. discount previous l-th
-        calibrate_residual_variance(model, l); // 2. calibrate variance
-        llik_ = SER(X,                         // 3. single-effect regression
-                    model.partial_nm,          //   - partial prediction
-                    model.residvar_lm.row(l),  //   - residual variance
-                    model.get_v0(l),           //   - prior variance
-                    stat,                      //   - statistics
-                    lodds_cutoff);             //   - log-odds cutoff
-        update_model_stat(model, X, stat, l);  // Put back the updated results
-        llik += llik_;                         // log-likelihood
+        discount_model_stat(model, X, Y, l);  // 1. discount previous l-th
+        llik_ = SER(X,                        // 2. single-effect regression
+                    model.partial_nm,         //   - partial prediction
+                    model.residvar_m,         //   - residual variance
+                    model.get_v0(l),          //   - prior variance
+                    stat,                     //   - statistics
+                    lodds_cutoff);            //   - log-odds cutoff
+        update_model_stat(model, X, stat, l); // Put back the updated stats
+        llik += llik_;                        // log-likelihood
+
+#ifdef DEBUG
+        WLOG("Level [" << l << "] " << llik_ << ": " << model.residvar_m);
+#endif
     }
+
+    calibrate_residual_variance(model, X, Y); // 3. calibrate variance
 
     return llik;
 }

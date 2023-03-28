@@ -1,9 +1,11 @@
 #include "mtSusie.hh"
 
-//' Estimate a multi-trait Sum of Single Effect regression model
+//' Estimate mtSusie regression model with counterfactual data
 //'
-//' @param x          design matrix
-//' @param y          output matrix
+//' @param x1         factual design matrix
+//' @param y1         factual output matrix
+//' @param x0         counterfactual design matrix
+//' @param y0         counterfactual output matrix
 //' @param levels     number of "single" effects
 //' @param max_iter   maximum iterations
 //' @param min_iter   minimum iterations
@@ -43,23 +45,39 @@
 //'
 // [[Rcpp::export]]
 Rcpp::List
-fit_mt_susie(const Rcpp::NumericMatrix x,
-             const Rcpp::NumericMatrix y,
-             const std::size_t levels = 15,
-             const std::size_t max_iter = 100,
-             const std::size_t min_iter = 1,
-             const double coverage = .9,
-             const double tol = 1e-8,
-             const double prior_var = 0.01,
-             const double lodds_cutoff = 0,
-             Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
-             const bool full_stat = true)
+fit_mt_cf_susie(const Rcpp::NumericMatrix x1,
+                const Rcpp::NumericMatrix y1,
+                const Rcpp::NumericMatrix x0,
+                const Rcpp::NumericMatrix y0,
+                const std::size_t levels = 15,
+                const std::size_t max_iter = 100,
+                const std::size_t min_iter = 1,
+                const double coverage = .9,
+                const double tol = 1e-8,
+                const double prior_var = 0.01,
+                const double lodds_cutoff = 0,
+                Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
+                const bool full_stat = true)
 {
 
-    shared_regression_t model(y.rows(), y.cols(), x.cols(), levels, prior_var);
-    shared_effect_stat_t stat(x.cols(), y.cols());
+    shared_regression_t model(y1.rows(),
+                              y1.cols(),
+                              x1.cols(),
+                              levels,
+                              prior_var);
 
-    const Mat xx = Rcpp::as<Mat>(x), yy = Rcpp::as<Mat>(y);
+    shared_effect_stat_t stat(x1.cols(), y1.cols());
+
+    shared_regression_t cf_model(y0.rows(),
+                                 y0.cols(),
+                                 x0.cols(),
+                                 levels,
+                                 prior_var);
+
+    shared_effect_stat_t cf_stat(x0.cols(), y0.cols());
+
+    const Mat xx = Rcpp::as<Mat>(x1), yy = Rcpp::as<Mat>(y1);
+    const Mat xx0 = Rcpp::as<Mat>(x0), yy0 = Rcpp::as<Mat>(y0);
 
     ASSERT_RETL(yy.rows() == xx.rows(),
                 "y and x have different numbers of rows");
@@ -69,8 +87,18 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
 
     for (Index iter = 0; iter < max_iter; ++iter) {
 
-        const Scalar curr =
-            update_shared_regression(model, stat, xx, yy, lodds_cutoff);
+        Scalar curr;
+        curr = update_paired_regression(model,
+                                        cf_model,
+                                        stat,
+                                        cf_stat,
+                                        xx,
+                                        yy,
+                                        xx0,
+                                        yy0,
+                                        lodds_cutoff);
+
+        //  TODO: prune out ?
 
         if (iter >= min_iter) {
             const Scalar prev = loglik.at(loglik.size() - 1);

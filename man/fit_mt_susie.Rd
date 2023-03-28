@@ -9,10 +9,10 @@ fit_mt_susie(
   y,
   levels = 15L,
   max_iter = 100L,
-  min_iter = 5L,
+  min_iter = 1L,
   coverage = 0.9,
   tol = 1e-08,
-  prior_var = 100,
+  prior_var = 0.01,
   lodds_cutoff = 0,
   min_pip_cutoff = NULL,
   full_stat = TRUE

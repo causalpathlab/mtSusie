@@ -19,7 +19,6 @@ struct shared_effect_stat_t {
         , lbf_pm(p, m)
         , mle_mean_pm(p, m)
         , mle_var_pm(p, m)
-        , prior_var_m(m)
         , XtY_pm(p, m)
         , x2_p(p)
         , lodds_m(m)
@@ -27,6 +26,12 @@ struct shared_effect_stat_t {
         , v0(1)
         , lbf_op(v0)
     {
+        alpha_p.setZero();
+        alpha0_p.setZero();
+        lbf_p.setZero();
+        lbf0_p.setZero();
+        mle_mean_pm.setZero();
+        mle_var_pm.setOnes();
     }
 
     const Index p, m;
@@ -38,10 +43,9 @@ struct shared_effect_stat_t {
     Mat post_mean_pm; // posterior mean
     Mat post_var_pm;  // posterior variance
 
-    Mat lbf_pm;         // log bayes factor
-    Mat mle_mean_pm;    // MLE mean
-    Mat mle_var_pm;     // MLE variance
-    RowVec prior_var_m; // prior variance
+    Mat lbf_pm;      // log bayes factor
+    Mat mle_mean_pm; // MLE mean
+    Mat mle_var_pm;  // MLE variance
 
     Mat XtY_pm;     // sufficient stat
     ColVec x2_p;    // sufficient stat
@@ -82,11 +86,13 @@ set_prior_var(STAT &stat, const Scalar v0)
 
 template <typename STAT>
 void
-calibrate_prior_var(STAT &stat)
+calibrate_prior_var(STAT &stat, const Scalar eps = 1e-8)
 {
     stat.v0 = sum_safe(
-        stat.alpha_p.transpose() *
-        (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm));
+        (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm)
+            .transpose() *
+        stat.alpha_p.transpose());
+    stat.v0 += eps;
 }
 
 template <typename STAT>
@@ -166,7 +172,8 @@ void
 update_mle_stat(STAT &stat,
                 const Eigen::MatrixBase<Derived1> &X,
                 const Eigen::MatrixBase<Derived2> &Y,
-                const Eigen::MatrixBase<Derived3> &resid_var_m)
+                const Eigen::MatrixBase<Derived3> &resid_var_m,
+                const Scalar eps = 1e-8)
 {
     XtY_safe(X, Y, stat.XtY_pm);                           // p x m
     rowsum_safe(X.cwiseProduct(X).transpose(), stat.x2_p); // p x 1
@@ -176,17 +183,20 @@ update_mle_stat(STAT &stat,
 
     // s2[j,k] = sigma[k]^2 / sum_i x[i,j]^2          (p x m)
     stat.mle_var_pm.setZero();
-    stat.mle_var_pm.rowwise() += resid_var_m;
+    stat.mle_var_pm.array().rowwise() += resid_var_m.row(0).array();
     stat.mle_var_pm.array().colwise() /= stat.x2_p.array();
+    stat.mle_var_pm.array() += eps;
 }
 
 template <typename STAT>
 void
-calibrate_post_stat(STAT &stat, const Scalar v0)
+calibrate_post_stat(STAT &stat, const Scalar v0, const Scalar eps = 1e-8)
 {
-    stat.post_var_pm = (stat.mle_var_pm.array().inverse() + 1. / v0).inverse();
-    stat.post_mean_pm = stat.mle_mean_pm.cwiseProduct(
-        stat.post_var_pm.cwiseQuotient(stat.mle_var_pm));
+    stat.post_var_pm =
+        (stat.mle_var_pm.array().inverse() + 1. / v0).inverse() + eps;
+
+    stat.post_mean_pm = stat.mle_mean_pm.cwiseProduct(stat.post_var_pm)
+                            .cwiseQuotient(stat.mle_var_pm);
 }
 
 template <typename STAT,
@@ -194,7 +204,7 @@ template <typename STAT,
           typename Derived2,
           typename Derived3>
 Scalar
-calculate_posterior_loglik(STAT &stat,
+calculate_posterior_loglik(STAT &S,
                            const Eigen::MatrixBase<Derived1> &X,
                            const Eigen::MatrixBase<Derived2> &Y,
                            const Eigen::MatrixBase<Derived3> &resid_var_m)
@@ -202,32 +212,26 @@ calculate_posterior_loglik(STAT &stat,
     Scalar llik = 0;
     const Scalar n = X.rows();
 
-    // hat <- safe.xty(t(X), sweep(mu, 1, alpha, `*`))
-    // hat2 <- safe.xty(t(X * X), sweep(mu2, 1, alpha, `*`))
-    // stuff <- apply(Y*Y - 2*Y*hat + hat2, 2, sum, na.rm=TRUE)
-    //  - 0.5 * sum(stuff / vR, na.rm=TRUE)
-
     // 1. Square terms
-    //    -0.5 * sum(Y^2 / vR)
-    //    Y .* (X * (mu .* alpha))
-    //    - 0.5 * X^2 * ((mu^2 + var) .* alpha)
+    //    -0.5 * sum((Y - X * (mu * alpha))^2 / vR)
 
     llik -= 0.5 *
-        sum_safe((Y.array().pow(2.).rowwise() / resid_var_m.array()).matrix());
-
-    llik += sum_safe(Y.cwiseProduct(
-        X *
-        ((stat.post_mean_pm.array().colwise() * stat.alpha_p.array())
-             .rowwise() /
-         resid_var_m.array())
-            .matrix()));
+        sum_safe(((Y -
+                   X *
+                       (S.post_mean_pm.array().colwise() * S.alpha_p.array())
+                           .matrix())
+                      .pow(2.)
+                      .array()
+                      .rowwise() /
+                  resid_var_m.array())
+                     .matrix());
 
     llik -=
         0.5 *
         sum_safe(
-            X.cwiseProduct(X) *
-            (((stat.post_mean_pm.pow(2.) + stat.post_var_pm).array().colwise() *
-              stat.alpha_p.array())
+            ((X.cwiseProduct(X) *
+              (S.post_var_pm.array().colwise() * S.alpha_p.array()).matrix())
+                 .array()
                  .rowwise() /
              resid_var_m.array())
                 .matrix());
