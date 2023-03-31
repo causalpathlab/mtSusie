@@ -199,6 +199,13 @@ update_model_stat(MODEL &model,
     model.fitted_nm += model.partial_nm;
 }
 
+template <typename MODEL>
+Scalar
+recon_error(MODEL &model)
+{
+    return model.residvar_m.sum();
+}
+
 template <typename MODEL, typename STAT, typename Derived>
 Scalar
 update_shared_regression(MODEL &model,
@@ -207,28 +214,22 @@ update_shared_regression(MODEL &model,
                          const Eigen::MatrixBase<Derived> &Y,
                          const Scalar lodds_cutoff = 0)
 {
-    Scalar llik = 0, llik_;
     const Index L = model.lvl;
-
+    Scalar score = 0.;
     for (Index l = 0; l < L; ++l) {
         discount_model_stat(model, X, Y, l);  // 1. discount previous l-th
-        llik_ = SER(X,                        // 2. single-effect regression
-                    model.partial_nm,         //   - partial prediction
-                    model.residvar_m,         //   - residual variance
-                    model.get_v0(l),          //   - prior variance
-                    stat,                     //   - statistics
-                    lodds_cutoff);            //   - log-odds cutoff
+        score += SER(X,                       // 2. single-effect regression
+                     model.partial_nm,        //   - partial prediction
+                     model.residvar_m,        //   - residual variance
+                     model.get_v0(l),         //   - prior variance
+                     stat,                    //   - statistics
+                     lodds_cutoff);           //   - log-odds cutoff
         update_model_stat(model, X, stat, l); // Put back the updated stats
-        llik += llik_;                        // log-likelihood
-
-#ifdef DEBUG
-        WLOG("Level [" << l << "] " << llik_ << ": " << model.residvar_m);
-#endif
     }
 
     calibrate_residual_variance(model, X, Y); // 3. calibrate variance
 
-    return llik;
+    return score;
 }
 
 #endif

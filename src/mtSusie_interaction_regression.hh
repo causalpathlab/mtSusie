@@ -63,11 +63,13 @@ update_shared_interaction_regression(MODEL &model,
                                      const Scalar lodds_cutoff = 0)
 
 {
-    Scalar llik = 0, llik_;
 
     Mat WX(X.rows(), X.cols()); // w[i,k] * x[i,j]
     const Index L = model.lvl;
     const Index K = W.cols();
+
+    Scalar score = 0.;
+
     for (Index l = 0; l < L; ++l) {
         const Index k = interaction.at(l);
         if (k >= 0) {
@@ -77,20 +79,18 @@ update_shared_interaction_regression(MODEL &model,
         }
 
         discount_model_stat(model, WX, Y, l);  // 1. discount previous l-th
-        llik_ = SER(WX,                        // 2. single-effect regression
-                    model.partial_nm,          //   - partial prediction
-                    model.residvar_m,          //   - residual variance
-                    model.get_v0(l),           //   - prior variance
-                    stat,                      //   - statistics
-                    lodds_cutoff);             //   - log-odds cutoff
+        score += SER(WX,                       // 2. single-effect regr
+                     model.partial_nm,         //   - partial prediction
+                     model.residvar_m,         //   - residual variance
+                     model.get_v0(l),          //   - prior variance
+                     stat,                     //   - statistics
+                     lodds_cutoff);            //   - log-odds cutoff
         update_model_stat(model, WX, stat, l); // Put back the updated stat
-
-        llik += llik_;
     }
 
     calibrate_residual_variance(model, X, Y, W, interaction);
 
-    return llik;
+    return score;
 }
 
 #endif

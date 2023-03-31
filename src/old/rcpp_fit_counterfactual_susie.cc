@@ -29,7 +29,7 @@
 //' \item{m}{number of traits/outputs}
 //' \item{p}{number of variants}
 //' \item{L}{number of layers/levels}
-//' \item{loglik}{log-likelihood trace}
+//'
 //' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 //'
 //' In the `cs`, we have
@@ -82,8 +82,8 @@ fit_mt_cf_susie(const Rcpp::NumericMatrix x1,
     ASSERT_RETL(yy.rows() == xx.rows(),
                 "y and x have different numbers of rows");
 
-    std::vector<Scalar> loglik;
-    loglik.reserve(max_iter);
+    std::vector<Scalar> score;
+    score.reserve(max_iter);
 
     for (Index iter = 0; iter < max_iter; ++iter) {
 
@@ -98,25 +98,32 @@ fit_mt_cf_susie(const Rcpp::NumericMatrix x1,
                                         yy0,
                                         lodds_cutoff);
 
-        //  TODO: prune out ?
-
-        if (iter >= min_iter) {
-            const Scalar prev = loglik.at(loglik.size() - 1);
-            const Scalar diff = (curr - prev) / (std::abs(curr) + 1e-8);
+        if (iter > min_iter) {
+            const Scalar prev = score.at(score.size() - 1);
+            const Scalar diff = std::abs(curr - prev) / (std::abs(curr) + 1e-8);
             if (diff < tol) {
-                loglik.emplace_back(curr);
+                score.emplace_back(curr);
                 TLOG("Converged at " << iter << ", " << curr);
                 break;
             }
         }
         TLOG("mtSusie [" << iter << "] " << curr);
-        loglik.emplace_back(curr);
+        score.emplace_back(curr);
+    }
+
+    // Prune out the alpha (pip) scores of the factual model
+    // using the counterfactual alpha scores
+    for (Index l = 0; l < model.lvl; ++l) {
+        for (Index k = 0; k < cf_model.lvl; ++k) {
+            model.shared_pip_pl.col(l).array() *=
+                (1.0 - cf_model.shared_pip_pl.col(k).array());
+        }
     }
 
     TLOG("Exporting model estimation results");
 
     Rcpp::List ret = mt_susie_output(model, full_stat);
-    ret["loglik"] = loglik;
+    ret["score"] = score;
 
     TLOG("Sorting credible sets");
     const Scalar _pip_cutoff = min_pip_cutoff.isNotNull() ?

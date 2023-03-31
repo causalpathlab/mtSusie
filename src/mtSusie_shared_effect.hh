@@ -91,12 +91,12 @@ calibrate_prior_var(STAT &stat, const Scalar eps = 1e-8)
     stat.v0 = sum_safe(
         (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm)
             .transpose() *
-        stat.alpha_p.transpose());
+        stat.alpha_p);
     stat.v0 += eps;
 }
 
 template <typename STAT>
-Index
+void
 calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
 {
     const Index m = stat.lodds_m.size();
@@ -112,9 +112,11 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
         stat.alpha_p /= stat.alpha_p.sum();
     }
 
+    const Scalar eps = 1e-8;
+
     if (stat.m == 1) { // single output
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
-        return nretain; // nothing to do
+        return; // nothing to do
     }
 
     for (Index inner = 0; inner < m; ++inner) {
@@ -153,7 +155,6 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
             break;
         }
     }
-    return nretain;
 }
 
 template <typename STAT>
@@ -244,6 +245,23 @@ calculate_posterior_loglik(STAT &S,
     return llik;
 }
 
+template <typename Derived1, typename Derived2>
+Scalar
+calculate_loglik(const Eigen::MatrixBase<Derived1> &Y,
+                 const Eigen::MatrixBase<Derived2> &resid_var_m)
+{
+    Scalar ret = -0.5 *
+        sum_safe(((Y.cwiseProduct(Y)).array().rowwise() / resid_var_m.array())
+                     .matrix());
+
+    Scalar nn = Y.rows();
+
+    ret -=
+        0.5 * nn * sum_safe((resid_var_m * 2. * M_PI).array().log().matrix());
+
+    return ret;
+}
+
 template <typename Derived1,
           typename Derived2,
           typename Derived3,
@@ -263,8 +281,7 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     calibrate_lbf(stat);
 
     // 2. Refine joint variable selection
-    const Index k = calibrate_post_selection(stat, lodds_cutoff);
-    // TLOG(k << " selected");
+    calibrate_post_selection(stat, lodds_cutoff);
 
     // 3. Calibrate posterior statistics
     calibrate_post_stat(stat, v0);

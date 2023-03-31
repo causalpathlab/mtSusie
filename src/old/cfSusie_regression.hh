@@ -13,28 +13,29 @@ update_paired_regression(MODEL &model_fa, // factual model
                          const Eigen::MatrixBase<Derived> &Y_cf,
                          const Scalar lodds_cutoff = 0)
 {
-    Scalar llik = 0, llik1, llik0;
 
     const Index L = std::min(model_fa.lvl, model_cf.lvl);
+
+    Scalar score = 0.;
 
     for (Index l = 0; l < L; ++l) {
 
         discount_model_stat(model_fa, X_fa, Y_fa, l); //
         discount_model_stat(model_cf, X_cf, Y_cf, l); //
 
-        llik1 = SER(X_fa,                // Single-effect regression
-                    model_fa.partial_nm, //   - partial prediction
-                    model_fa.residvar_m, //   - residual variance
-                    model_fa.get_v0(l),  //   - prior variance
-                    stat_fa,             //   - statistics
-                    lodds_cutoff);       //   - log-odds cutoff
+        score += SER(X_fa,                // Single-effect regression
+                     model_fa.partial_nm, //   - partial prediction
+                     model_fa.residvar_m, //   - residual variance
+                     model_fa.get_v0(l),  //   - prior variance
+                     stat_fa,             //   - statistics
+                     lodds_cutoff);       //   - log-odds cutoff
 
-        llik0 = SER(X_cf,                // Single-effect regression
-                    model_cf.partial_nm, //   - partial prediction
-                    model_cf.residvar_m, //   - residual variance
-                    model_cf.get_v0(l),  //   - prior variance
-                    stat_cf,             //   - statistics
-                    lodds_cutoff);       //   - log-odds cutoff
+        score += SER(X_cf,                // Single-effect regression
+                     model_cf.partial_nm, //   - partial prediction
+                     model_cf.residvar_m, //   - residual variance
+                     model_cf.get_v0(l),  //   - prior variance
+                     stat_cf,             //   - statistics
+                     lodds_cutoff);       //   - log-odds cutoff
 
         // Recalibrate posterior statistics and prior vars
         calibrate_prior_var(stat_fa);
@@ -44,14 +45,12 @@ update_paired_regression(MODEL &model_fa, // factual model
 
         update_model_stat(model_fa, X_fa, stat_fa, l);
         update_model_stat(model_cf, X_cf, stat_cf, l);
-
-        llik += llik1;
     }
 
     calibrate_residual_variance(model_fa, X_fa, Y_fa);
     calibrate_residual_variance(model_cf, X_cf, Y_cf);
 
-    return llik;
+    return score;
 }
 
 #endif

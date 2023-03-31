@@ -28,7 +28,7 @@
 //' \item{m}{number of traits/outputs}
 //' \item{p}{number of variants}
 //' \item{L}{number of layers/levels}
-//' \item{loglik}{log-likelihood trace}
+//'
 //' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 //'
 //' In the `cs`, we have
@@ -77,8 +77,8 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     ASSERT_RETL(yy.rows() == xx.rows(),
                 "y and x have different numbers of rows");
 
-    std::vector<Scalar> loglik;
-    loglik.reserve(max_iter);
+    std::vector<Scalar> score;
+    score.reserve(max_iter);
 
     /////////////////////////////////////////////////////
     // Mark which level will involve interaction terms //
@@ -112,17 +112,17 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                                                  levels_per_inter,
                                                  lodds_cutoff);
 
-        if (iter >= min_iter) {
-            const Scalar prev = loglik.at(loglik.size() - 1);
-            const Scalar diff = (curr - prev) / (std::abs(curr) + 1e-8);
+        if (iter > min_iter) {
+            const Scalar prev = score.at(score.size() - 1);
+            const Scalar diff = std::abs(prev - curr) / (std::abs(curr) + 1e-8);
             if (diff < tol) {
-                loglik.emplace_back(curr);
+                score.emplace_back(curr);
                 TLOG("Converged at " << iter << ", " << curr);
                 break;
             }
         }
         TLOG("mtSusie [" << iter << "] " << curr);
-        loglik.emplace_back(curr);
+        score.emplace_back(curr);
     }
 
     TLOG("Exporting model estimation results");

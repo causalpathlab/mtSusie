@@ -53,7 +53,7 @@ a list of mtSusie results
 \item{m}{number of traits/outputs}
 \item{p}{number of variants}
 \item{L}{number of layers/levels}
-\item{loglik}{log-likelihood trace}
+
 \item{cs}{credible sets (use \code{data.table::setDT} to assemble)}
 
 In the \code{cs}, we have
