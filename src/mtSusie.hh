@@ -1,5 +1,6 @@
 // [[Rcpp::plugins(cpp14)]]
 #include <Rcpp.h>
+
 // [[Rcpp::depends(RcppEigen)]]
 #include <RcppEigen.h>
 
