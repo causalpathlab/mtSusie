@@ -73,7 +73,7 @@ struct shared_effect_stat_t {
             return 0.5 * (stuff2 - stuff1);
         }
         const Scalar &v0;
-        static constexpr Scalar tol = 1e-4;
+        static constexpr Scalar tol = 1e-16;
     } lbf_op;
 };
 
@@ -86,9 +86,7 @@ set_prior_var(STAT &stat, const Scalar v0)
 
 template <typename STAT>
 void
-calibrate_prior_var(STAT &stat,
-                    const Scalar eps = 1e-4,
-                    const Scalar max_var = 100.)
+calibrate_prior_var(STAT &stat, const Scalar max_var = 100.)
 {
     stat.v0 = sum_safe(
         (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm)
@@ -97,8 +95,6 @@ calibrate_prior_var(STAT &stat,
 
     if (stat.v0 > max_var)
         stat.v0 = max_var;
-
-    stat.v0 += eps;
 }
 
 template <typename STAT>
@@ -117,8 +113,6 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
         stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
         stat.alpha_p /= stat.alpha_p.sum();
     }
-
-    const Scalar eps = 1e-4;
 
     if (stat.m == 1) { // single output
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
@@ -180,7 +174,7 @@ update_mle_stat(STAT &stat,
                 const Eigen::MatrixBase<Derived1> &X,
                 const Eigen::MatrixBase<Derived2> &Y,
                 const Eigen::MatrixBase<Derived3> &residvar_m,
-                const Scalar eps = 1e-4)
+                const Scalar eps = 1e-16)
 {
     XtY_safe(X, Y, stat.XtY_pm);                           // p x m
     rowsum_safe(X.cwiseProduct(X).transpose(), stat.x2_p); // p x 1
@@ -197,10 +191,9 @@ update_mle_stat(STAT &stat,
 
 template <typename STAT>
 void
-calibrate_post_stat(STAT &stat, const Scalar v0, const Scalar eps = 1e-4)
+calibrate_post_stat(STAT &stat, const Scalar v0)
 {
-    stat.post_var_pm =
-        (stat.mle_var_pm.array().inverse() + 1. / v0).inverse() + eps;
+    stat.post_var_pm = (stat.mle_var_pm.array().inverse() + 1. / v0).inverse();
 
     stat.post_mean_pm = stat.mle_mean_pm.cwiseProduct(stat.post_var_pm)
                             .cwiseQuotient(stat.mle_var_pm);
@@ -285,10 +278,9 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     calibrate_prior_var(stat);
 
     const Scalar ellik = calculate_posterior_loglik(stat, X, Y, residvar_m);
-    // const Scalar llik = calculate_loglik(Y, residvar_m);
+    const Scalar llik = calculate_loglik(Y, residvar_m);
     // WLOG(ellik << " " << llik << " " << (ellik - llik));
-    // return ellik - llik;
-    return ellik;
+    return ellik - llik;
 }
 
 #endif
