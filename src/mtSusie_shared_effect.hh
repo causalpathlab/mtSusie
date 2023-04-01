@@ -73,7 +73,7 @@ struct shared_effect_stat_t {
             return 0.5 * (stuff2 - stuff1);
         }
         const Scalar &v0;
-        static constexpr Scalar tol = 1e-8;
+        static constexpr Scalar tol = 1e-4;
     } lbf_op;
 };
 
@@ -86,12 +86,18 @@ set_prior_var(STAT &stat, const Scalar v0)
 
 template <typename STAT>
 void
-calibrate_prior_var(STAT &stat, const Scalar eps = 1e-8)
+calibrate_prior_var(STAT &stat,
+                    const Scalar eps = 1e-4,
+                    const Scalar max_var = 100.)
 {
     stat.v0 = sum_safe(
         (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm)
             .transpose() *
         stat.alpha_p);
+
+    if (stat.v0 > max_var)
+        stat.v0 = max_var;
+
     stat.v0 += eps;
 }
 
@@ -112,7 +118,7 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
         stat.alpha_p /= stat.alpha_p.sum();
     }
 
-    const Scalar eps = 1e-8;
+    const Scalar eps = 1e-4;
 
     if (stat.m == 1) { // single output
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
@@ -173,8 +179,8 @@ void
 update_mle_stat(STAT &stat,
                 const Eigen::MatrixBase<Derived1> &X,
                 const Eigen::MatrixBase<Derived2> &Y,
-                const Eigen::MatrixBase<Derived3> &resid_var_m,
-                const Scalar eps = 1e-8)
+                const Eigen::MatrixBase<Derived3> &residvar_m,
+                const Scalar eps = 1e-4)
 {
     XtY_safe(X, Y, stat.XtY_pm);                           // p x m
     rowsum_safe(X.cwiseProduct(X).transpose(), stat.x2_p); // p x 1
@@ -184,14 +190,14 @@ update_mle_stat(STAT &stat,
 
     // s2[j,k] = sigma[k]^2 / sum_i x[i,j]^2          (p x m)
     stat.mle_var_pm.setZero();
-    stat.mle_var_pm.array().rowwise() += resid_var_m.row(0).array();
+    stat.mle_var_pm.array().rowwise() += residvar_m.row(0).array();
     stat.mle_var_pm.array().colwise() /= stat.x2_p.array();
     stat.mle_var_pm.array() += eps;
 }
 
 template <typename STAT>
 void
-calibrate_post_stat(STAT &stat, const Scalar v0, const Scalar eps = 1e-8)
+calibrate_post_stat(STAT &stat, const Scalar v0, const Scalar eps = 1e-4)
 {
     stat.post_var_pm =
         (stat.mle_var_pm.array().inverse() + 1. / v0).inverse() + eps;
@@ -208,39 +214,32 @@ Scalar
 calculate_posterior_loglik(STAT &S,
                            const Eigen::MatrixBase<Derived1> &X,
                            const Eigen::MatrixBase<Derived2> &Y,
-                           const Eigen::MatrixBase<Derived3> &resid_var_m)
+                           const Eigen::MatrixBase<Derived3> &residvar_m)
 {
     Scalar llik = 0;
     const Scalar n = X.rows();
 
     // 1. Square terms
     //    -0.5 * sum((Y - X * (mu * alpha))^2 / vR)
+    for (Index k = 0; k < Y.cols(); ++k) {
 
-    llik -= 0.5 *
-        sum_safe(((Y -
-                   X *
-                       (S.post_mean_pm.array().colwise() * S.alpha_p.array())
-                           .matrix())
-                      .pow(2.)
-                      .array()
-                      .rowwise() /
-                  resid_var_m.array())
-                     .matrix());
+        // residual sums of squares
+        const Scalar rss =
+            sum_safe((Y - X * S.post_mean_pm.col(k).cwiseProduct(S.alpha_p))
+                         .array()
+                         .square()
+                         .matrix());
 
-    llik -=
-        0.5 *
-        sum_safe(
-            ((X.cwiseProduct(X) *
-              (S.post_var_pm.array().colwise() * S.alpha_p.array()).matrix())
-                 .array()
-                 .rowwise() /
-             resid_var_m.array())
-                .matrix());
+        // expected variance
+        const Scalar evar = sum_safe(
+            X.cwiseProduct(X) * S.post_var_pm.col(k).cwiseProduct(S.alpha_p));
+
+        llik -= 0.5 * (rss + evar) / residvar_m(k);
+    }
 
     // 2. Log terms
     //    -0.5 * n * sum(log(2*pi*vR)
-    llik -=
-        0.5 * n * sum_safe((resid_var_m * 2. * M_PI).array().log().matrix());
+    llik -= 0.5 * n * sum_safe((residvar_m * 2. * M_PI).array().log().matrix());
 
     return llik;
 }
@@ -248,16 +247,15 @@ calculate_posterior_loglik(STAT &S,
 template <typename Derived1, typename Derived2>
 Scalar
 calculate_loglik(const Eigen::MatrixBase<Derived1> &Y,
-                 const Eigen::MatrixBase<Derived2> &resid_var_m)
+                 const Eigen::MatrixBase<Derived2> &residvar_m)
 {
     Scalar ret = -0.5 *
-        sum_safe(((Y.cwiseProduct(Y)).array().rowwise() / resid_var_m.array())
+        sum_safe(((Y.cwiseProduct(Y)).array().rowwise() / residvar_m.array())
                      .matrix());
 
-    Scalar nn = Y.rows();
+    const Scalar n = Y.rows();
 
-    ret -=
-        0.5 * nn * sum_safe((resid_var_m * 2. * M_PI).array().log().matrix());
+    ret -= 0.5 * n * sum_safe((residvar_m * 2. * M_PI).array().log().matrix());
 
     return ret;
 }
@@ -269,7 +267,7 @@ template <typename Derived1,
 Scalar
 SER(const Eigen::MatrixBase<Derived1> &X,
     const Eigen::MatrixBase<Derived2> &Y,
-    const Eigen::MatrixBase<Derived3> &resid_var_m,
+    const Eigen::MatrixBase<Derived3> &residvar_m,
     const Scalar v0,
     STAT &stat,
     const Scalar lodds_cutoff = 0)
@@ -277,17 +275,20 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     set_prior_var(stat, v0);
 
     // 1. Update sufficient statistics
-    update_mle_stat(stat, X, Y, resid_var_m);
+    update_mle_stat(stat, X, Y, residvar_m);
     calibrate_lbf(stat);
 
     // 2. Refine joint variable selection
     calibrate_post_selection(stat, lodds_cutoff);
-
     // 3. Calibrate posterior statistics
     calibrate_post_stat(stat, v0);
     calibrate_prior_var(stat);
 
-    return calculate_posterior_loglik(stat, X, Y, resid_var_m);
+    const Scalar ellik = calculate_posterior_loglik(stat, X, Y, residvar_m);
+    // const Scalar llik = calculate_loglik(Y, residvar_m);
+    // WLOG(ellik << " " << llik << " " << (ellik - llik));
+    // return ellik - llik;
+    return ellik;
 }
 
 #endif
