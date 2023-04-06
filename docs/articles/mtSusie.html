@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mtSusie</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
@@ -149,24 +149,26 @@
 <p>Here comes our <code>mtSusie</code> (multi-trait Sum of Single Effects) model. The idea is a simple modification to the original <code>susieR</code> method. For each level/layer, we aggregate the log Bayes Factors across multiple traits. Yes, it was that simple.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mtSusie</span><span class="op">)</span>
-<span class="va">mt.susie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_susie.html">mt_susie</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, clamp<span class="op">=</span><span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+<span class="va">mt.susie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_susie.html">mt_susie</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span><span class="op">)</span></code></pre></div>
+<pre><code><span class="co">## winsorization with the clamping value = 4</span></code></pre>
 <pre><code><span class="co">## Fitting mtSusie ...</span></code></pre>
 <pre><code><span class="co">## Done</span></code></pre>
 <p>Which traits do we combine at each level?</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">.dt</span> <span class="op">&lt;-</span> <span class="fu">reshape2</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/reshape2/man/melt.html" class="external-link">melt</a></span><span class="op">(</span><span class="va">mt.susie</span><span class="op">$</span><span class="va">log.odds</span><span class="op">)</span>
 <span class="fu">ggplot</span><span class="op">(</span><span class="va">.dt</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">Var1</span>, <span class="va">Var2</span>, fill<span class="op">=</span><span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">geom_tile</span><span class="op">(</span>colour<span class="op">=</span><span class="st">"gray20"</span>, size<span class="op">=</span><span class="fl">.1</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">xlab</span><span class="op">(</span><span class="st">"levels"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">ylab</span><span class="op">(</span><span class="st">"traits"</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">scale_fill_distiller</span><span class="op">(</span>direction<span class="op">=</span><span class="fl">1</span><span class="op">)</span></code></pre></div>
 <p><img src="mtSusie_files/figure-html/unnamed-chunk-8-1.png" width="768"></p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">.dt</span> <span class="op">&lt;-</span> <span class="fu">reshape2</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/reshape2/man/melt.html" class="external-link">melt</a></span><span class="op">(</span><span class="va">mt.susie</span><span class="op">$</span><span class="va">alpha</span><span class="op">)</span> <span class="op">%&gt;%</span>
-    <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Var2</span> <span class="op">&lt;=</span> <span class="fl">10</span><span class="op">)</span>
+    <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">Var2</span> <span class="op">&lt;=</span> <span class="fl">10</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu">mutate</span><span class="op">(</span>lvl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"L%02d"</span>, <span class="va">`Var2`</span><span class="op">)</span><span class="op">)</span>
 
 <span class="va">plt</span> <span class="op">&lt;-</span>
     <span class="fu">ggplot</span><span class="op">(</span><span class="va">.dt</span>, <span class="fu">aes</span><span class="op">(</span><span class="va">Var1</span>, <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
-    <span class="fu">facet_wrap</span><span class="op">(</span><span class="va">.</span><span class="op">~</span><span class="va">Var2</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span>
+    <span class="fu">facet_wrap</span><span class="op">(</span><span class="va">.</span><span class="op">~</span><span class="va">lvl</span>, nrow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">ylab</span><span class="op">(</span><span class="st">"PIP"</span><span class="op">)</span> <span class="op">+</span> <span class="fu">xlab</span><span class="op">(</span><span class="st">"variants"</span><span class="op">)</span> <span class="op">+</span>
     <span class="fu">geom_point</span><span class="op">(</span>colour<span class="op">=</span><span class="st">"gray"</span>, size<span class="op">=</span><span class="fl">2</span><span class="op">)</span>
 
@@ -177,7 +179,7 @@
 <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">plt</span><span class="op">)</span></code></pre></div>
 <p><img src="mtSusie_files/figure-html/unnamed-chunk-9-1.png" width="768"></p>
 <p>Once we have identified a “union” of all the causal variants across all the traits, we can assign trait-specific effects based on variant-by-variant statistics at each level/layer. At each level, <code>mtSusie</code> will select a causal variant shared across traits, but not all the traits will support it and result in trait-specific local false sign rate (LFSR) values.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">.dt</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://Rdatatable.gitlab.io/data.table/reference/setDT.html" class="external-link">setDT</a></span><span class="op">(</span><span class="va">mt.susie</span><span class="op">$</span><span class="va">cs</span><span class="op">)</span>
 <span class="va">.show</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">.dt</span><span class="op">[</span><span class="va">alpha</span> <span class="op">&gt;</span> <span class="fl">.1</span><span class="op">]</span><span class="op">$</span><span class="va">variants</span><span class="op">)</span>
 <span class="va">.dt</span> <span class="op">&lt;-</span> <span class="va">.dt</span><span class="op">[</span><span class="va">variants</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">.show</span><span class="op">]</span>

@@ -44,7 +44,7 @@
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index}
 #'
-fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-8, prior_var = 0.01, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE) {
+fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE) {
     .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_inter, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat)
 }
 
@@ -89,7 +89,7 @@ fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 
 #' \item{lfsr}{local false sign rate}
 #' \item{lodds}{log-odds ratio}
 #'
-fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-8, prior_var = 0.01, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE) {
+fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE) {
     .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat)
 }
 

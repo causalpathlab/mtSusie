@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">mtSusie</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.1</span>
       </span>
     </div>
 
@@ -50,7 +50,8 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">mt_susie</span><span class="op">(</span>
   <span class="va">X</span>,
   <span class="va">Y</span>,
-  L <span class="op">=</span> <span class="fl">15</span>,
+  L <span class="op">=</span> <span class="fl">5</span>,
+  W <span class="op">=</span> <span class="cn">NULL</span>,
   clamp <span class="op">=</span> <span class="fl">4</span>,
   max.iter <span class="op">=</span> <span class="fl">100</span>,
   min.iter <span class="op">=</span> <span class="fl">5</span>,
@@ -58,7 +59,8 @@
   coverage <span class="op">=</span> <span class="fl">0.9</span>,
   min.pip.cutoff <span class="op">=</span> <span class="cn">NULL</span>,
   lodds.cutoff <span class="op">=</span> <span class="fl">0</span>,
-  prior.var <span class="op">=</span> <span class="fl">100</span>
+  prior.var <span class="op">=</span> <span class="fl">0.1</span>,
+  output.full.stat <span class="op">=</span> <span class="cn">TRUE</span>
 <span class="op">)</span></code></pre></div>
     </div>
 
@@ -73,7 +75,11 @@
 
 
 <dt>L</dt>
-<dd><p>levels or expected num of independent factors (default: 15)</p></dd>
+<dd><p>levels or expected num of independent factors (default: 5)</p></dd>
+
+
+<dt>W</dt>
+<dd><p>n x k interaction terms matrix (default: NULL)</p></dd>
 
 
 <dt>clamp</dt>
@@ -101,11 +107,15 @@
 
 
 <dt>lodds.cutoff</dt>
-<dd><p>log-odds ratio cutoff for multitrait factors</p></dd>
+<dd><p>log-odds ratio cutoff for multi-trait factors (default: 0)</p></dd>
 
 
 <dt>prior.var</dt>
-<dd><p>prior level variance</p></dd>
+<dd><p>prior level variance (default: 0.1)</p></dd>
+
+
+<dt>output.full.stat</dt>
+<dd><p>output every bit of the results (default: TRUE)</p></dd>
 
 </dl></div>
     <div id="value">
@@ -184,7 +194,11 @@
 <dt>lodds</dt>
 <dd><p>log-odds ratio</p></dd>
 
-</dl></div>
+
+<dt>interaction</dt>
+<dd><p>interacting column index</p></dd>
+</dl><p>(if W!=NULL)</p>
+    </div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

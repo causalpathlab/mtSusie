@@ -99,7 +99,7 @@ Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is 
 
 ```{r}
 library(mtSusie)
-mt.susie <- mt_susie(X, Y, clamp=NULL)
+mt.susie <- mt_susie(X, Y)
 ```
 
 Which traits do we combine at each level?
@@ -114,11 +114,12 @@ ggplot(.dt, aes(Var1, Var2, fill=value)) +
 
 ```{r fig.width=8, fig.height=5}
 .dt <- reshape2::melt(mt.susie$alpha) %>%
-    filter(Var2 <= 10)
+    filter(Var2 <= 10) %>%
+    mutate(lvl = sprintf("L%02d", `Var2`))
 
 plt <-
     ggplot(.dt, aes(Var1, value)) +
-    facet_wrap(.~Var2, nrow = 2) +
+    facet_wrap(.~lvl, nrow = 2) +
     ylab("PIP") + xlab("variants") +
     geom_point(colour="gray", size=2)
 
