@@ -13,6 +13,7 @@
 //' @param lodds_cutoff log-odds cutoff in trait selection steps
 //' @param min_pip_cutoff minimum PIP cutoff in building credible sets
 //' @param full_stat keep full statistics
+//' @param local_residual locally calculate residuals
 //'
 //'
 //' @return a list of mtSusie results
@@ -56,7 +57,8 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                          const double prior_var = 0.1,
                          const double lodds_cutoff = 0,
                          Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
-                         const bool full_stat = true)
+                         const bool full_stat = true,
+                         const bool local_residual = true)
 {
 
     const Mat xx = Rcpp::as<Mat>(x), yy = Rcpp::as<Mat>(y);
@@ -102,19 +104,19 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     TLOG(K << " interaction variables, total " << L << " levels");
 
     for (Index iter = 0; iter < max_iter; ++iter) {
-        const Scalar curr =
-            update_shared_interaction_regression(model,
-                                                 stat,
-                                                 xx,
-                                                 yy,
-                                                 ww,
-                                                 interaction,
-                                                 levels_per_inter,
-                                                 lodds_cutoff);
+        Scalar curr = update_shared_interaction_regression(model,
+                                                           stat,
+                                                           xx,
+                                                           yy,
+                                                           ww,
+                                                           interaction,
+                                                           levels_per_inter,
+                                                           lodds_cutoff,
+                                                           local_residual);
 
         if (iter > min_iter) {
-            const Scalar prev = score.at(score.size() - 1);
-            const Scalar diff = std::abs(prev - curr) / (std::abs(curr) + 1e-8);
+            Scalar prev = score.at(score.size() - 1);
+            Scalar diff = std::abs(prev - curr) / (std::abs(curr) + 1e-8);
             if (diff < tol) {
                 score.emplace_back(curr);
                 TLOG("Converged at " << iter << ", " << curr);

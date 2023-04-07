@@ -147,8 +147,7 @@ template <typename MODEL, typename Derived>
 void
 calibrate_residual_variance(MODEL &model,
                             const Eigen::MatrixBase<Derived> &X,
-                            const Eigen::MatrixBase<Derived> &Y,
-                            const Scalar eps = 1e-4)
+                            const Eigen::MatrixBase<Derived> &Y)
 {
 
     // Expected R2 value for each output
@@ -171,7 +170,6 @@ calibrate_residual_variance(MODEL &model,
     }
 
     model.residvar_m = model.residvar_m / nn;
-    model.residvar_m.array() += eps;
 }
 
 template <typename MODEL, typename Derived, typename STAT>
@@ -186,6 +184,7 @@ update_model_stat(MODEL &model,
     model.set_var(l, stat.post_var_pm);
     model.set_lbf(l, stat.lbf_pm);
     model.prior_var(l) = stat.v0;
+
     model.set_z(l, stat.mle_mean_pm.cwiseQuotient(stat.mle_var_pm.cwiseSqrt()));
 
     model.lodds_lm.row(l) = stat.lodds_m;
@@ -212,13 +211,22 @@ update_shared_regression(MODEL &model,
                          STAT &stat,
                          const Eigen::MatrixBase<Derived> &X,
                          const Eigen::MatrixBase<Derived> &Y,
-                         const Scalar lodds_cutoff = 0)
+                         const Scalar lodds_cutoff = 0,
+                         const bool local_residual = false)
 {
     const Index L = model.lvl;
     Scalar score = 0.;
     for (Index l = 0; l < L; ++l) {
-        discount_model_stat(model, X, Y, l);  // 1. discount previous l-th
-        score += SER(X,                       // 2. single-effect regression
+
+        // 1. discount previous l-th
+        discount_model_stat(model, X, Y, l);
+
+        // 2. calibrate residual variance locally...
+        if (local_residual) {
+            calibrate_residual_variance(model, X, model.partial_nm);
+        }
+
+        score += SER(X,                       // 3. single-effect regression
                      model.partial_nm,        //   - partial prediction
                      model.residvar_m,        //   - residual variance
                      model.get_v0(l),         //   - prior variance
@@ -227,7 +235,10 @@ update_shared_regression(MODEL &model,
         update_model_stat(model, X, stat, l); // Put back the updated stats
     }
 
-    calibrate_residual_variance(model, X, Y); // 3. calibrate variance
+    // Calibrate residual calculation globally
+    if (!local_residual) {
+        calibrate_residual_variance(model, X, Y);
+    }
 
     return score;
 }

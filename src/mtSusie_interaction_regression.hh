@@ -7,8 +7,7 @@ calibrate_residual_variance(MODEL &model,
                             const Eigen::MatrixBase<Derived> &X,
                             const Eigen::MatrixBase<Derived> &Y,
                             const Eigen::MatrixBase<Derived> &W,
-                            const std::vector<int> &interaction,
-                            const Scalar eps = 1e-4)
+                            const std::vector<int> &interaction)
 {
 
     Mat WX(X.rows(), X.cols()); // w[i,k] * x[i,j]
@@ -48,7 +47,6 @@ calibrate_residual_variance(MODEL &model,
     }
 
     model.residvar_m = model.residvar_m / nn;
-    model.residvar_m.array() += eps;
 }
 
 template <typename MODEL, typename STAT, typename Derived>
@@ -60,7 +58,8 @@ update_shared_interaction_regression(MODEL &model,
                                      const Eigen::MatrixBase<Derived> &W,
                                      const std::vector<int> &interaction,
                                      const Index levels_per_inter,
-                                     const Scalar lodds_cutoff = 0)
+                                     const Scalar lodds_cutoff = 0,
+                                     const bool local_residual = false)
 
 {
 
@@ -78,17 +77,30 @@ update_shared_interaction_regression(MODEL &model,
             WX = X;                                      // unweighted
         }
 
-        discount_model_stat(model, WX, Y, l);  // 1. discount previous l-th
-        score += SER(WX,                       // 2. single-effect regr
-                     model.partial_nm,         //   - partial prediction
-                     model.residvar_m,         //   - residual variance
-                     model.get_v0(l),          //   - prior variance
-                     stat,                     //   - statistics
-                     lodds_cutoff);            //   - log-odds cutoff
+        discount_model_stat(model, WX, Y, l); // 1. discount previous l-th
+
+        if (local_residual) {
+            calibrate_residual_variance(model,
+                                        X,
+                                        model.partial_nm,
+                                        W,
+                                        interaction);
+        }
+
+        score += SER(WX,               // 3. single-effect regr
+                     model.partial_nm, //   - partial prediction
+                     model.residvar_m, //   - residual variance
+                     model.get_v0(l),  //   - prior variance
+                     stat,             //   - statistics
+                     lodds_cutoff);    //   - log-odds cutoff
+
         update_model_stat(model, WX, stat, l); // Put back the updated stat
     }
 
-    calibrate_residual_variance(model, X, Y, W, interaction);
+    // Calibrate residual calculation globally
+    if (!local_residual) {
+        calibrate_residual_variance(model, X, Y, W, interaction);
+    }
 
     return score;
 }

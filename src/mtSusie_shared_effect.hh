@@ -207,50 +207,69 @@ Scalar
 calculate_posterior_loglik(STAT &S,
                            const Eigen::MatrixBase<Derived1> &X,
                            const Eigen::MatrixBase<Derived2> &Y,
-                           const Eigen::MatrixBase<Derived3> &residvar_m)
+                           const Eigen::MatrixBase<Derived3> &residvar_m,
+                           const Scalar lodds_cutoff)
 {
     Scalar llik = 0;
     const Scalar n = X.rows();
 
-    // 1. Square terms
-    //    -0.5 * sum((Y - X * (mu * alpha))^2 / vR)
+    // For each k in [m]: choose output with lodds > lodds_cutoff
+    // - Take average
+    Scalar denom = 0;
     for (Index k = 0; k < Y.cols(); ++k) {
+        if (S.lodds_m(k) <= lodds_cutoff)
+            continue;
+        denom++;
 
+        // 1. Square terms
+        //    -0.5 * sum((Y - X * (mu * alpha))^2 / vR)
         // residual sums of squares
-        const Scalar rss =
-            sum_safe((Y - X * S.post_mean_pm.col(k).cwiseProduct(S.alpha_p))
-                         .array()
-                         .square()
-                         .matrix());
+        const Scalar rss = sum_safe(
+            (Y.col(k) - X * S.post_mean_pm.col(k).cwiseProduct(S.alpha_p))
+                .array()
+                .square()
+                .matrix());
 
         // expected variance
         const Scalar evar = sum_safe(
             X.cwiseProduct(X) * S.post_var_pm.col(k).cwiseProduct(S.alpha_p));
 
         llik -= 0.5 * (rss + evar) / residvar_m(k);
+
+        // 2. Log terms
+        //    -0.5 * n * sum(log(2*pi*vR)
+        const Scalar eps = 1e-8;
+        llik -= 0.5 * n * std::log(residvar_m(k) * 2. * M_PI + eps);
     }
-
-    // 2. Log terms
-    //    -0.5 * n * sum(log(2*pi*vR)
-    llik -= 0.5 * n * sum_safe((residvar_m * 2. * M_PI).array().log().matrix());
-
+    if (denom > 0)
+        llik /= denom;
     return llik;
 }
 
-template <typename Derived1, typename Derived2>
+template <typename STAT, typename Derived1, typename Derived2>
 Scalar
-calculate_loglik(const Eigen::MatrixBase<Derived1> &Y,
-                 const Eigen::MatrixBase<Derived2> &residvar_m)
+calculate_loglik(STAT &S,
+                 const Eigen::MatrixBase<Derived1> &Y,
+                 const Eigen::MatrixBase<Derived2> &residvar_m,
+                 const Scalar lodds_cutoff)
 {
-    Scalar ret = -0.5 *
-        sum_safe(((Y.cwiseProduct(Y)).array().rowwise() / residvar_m.array())
-                     .matrix());
+    Scalar llik = 0;
+    Scalar denom = 0;
 
     const Scalar n = Y.rows();
+    const Scalar eps = 1e-8;
+    for (Index k = 0; k < Y.cols(); ++k) {
+        if (S.lodds_m(k) <= lodds_cutoff)
+            continue;
+        denom++;
 
-    ret -= 0.5 * n * sum_safe((residvar_m * 2. * M_PI).array().log().matrix());
+        llik -= 0.5 * sum_safe(Y.col(k).cwiseProduct(Y.col(k)) / residvar_m(k));
+        llik -= 0.5 * n * std::log(residvar_m(k) * 2. * M_PI + eps);
+    }
 
-    return ret;
+    if (denom > 0)
+        llik /= denom;
+    return llik;
 }
 
 template <typename Derived1,
@@ -260,27 +279,27 @@ template <typename Derived1,
 Scalar
 SER(const Eigen::MatrixBase<Derived1> &X,
     const Eigen::MatrixBase<Derived2> &Y,
-    const Eigen::MatrixBase<Derived3> &residvar_m,
+    const Eigen::MatrixBase<Derived3> &rV,
     const Scalar v0,
     STAT &stat,
-    const Scalar lodds_cutoff = 0)
+    const Scalar locutoff = 0)
 {
     set_prior_var(stat, v0);
 
     // 1. Update sufficient statistics
-    update_mle_stat(stat, X, Y, residvar_m);
+    update_mle_stat(stat, X, Y, rV);
     calibrate_lbf(stat);
 
     // 2. Refine joint variable selection
-    calibrate_post_selection(stat, lodds_cutoff);
+    calibrate_post_selection(stat, locutoff);
     // 3. Calibrate posterior statistics
     calibrate_post_stat(stat, v0);
     calibrate_prior_var(stat);
 
-    const Scalar ellik = calculate_posterior_loglik(stat, X, Y, residvar_m);
-    const Scalar llik = calculate_loglik(Y, residvar_m);
+    return calculate_posterior_loglik(stat, X, Y, rV, locutoff);
+    // Scalar llik = calculate_loglik(stat, Y, rV, locutoff);
     // WLOG(ellik << " " << llik << " " << (ellik - llik));
-    return ellik - llik;
+    // return ellik - llik;
 }
 
 #endif

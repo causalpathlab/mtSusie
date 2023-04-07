@@ -47,19 +47,20 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">fit_mt_susie</span><span class="op">(</span>
-  <span class="va">x</span>,
-  <span class="va">y</span>,
-  levels <span class="op">=</span> <span class="fl">15L</span>,
-  max_iter <span class="op">=</span> <span class="fl">100L</span>,
-  min_iter <span class="op">=</span> <span class="fl">1L</span>,
-  coverage <span class="op">=</span> <span class="fl">0.9</span>,
-  tol <span class="op">=</span> <span class="fl">1e-04</span>,
-  prior_var <span class="op">=</span> <span class="fl">0.1</span>,
-  lodds_cutoff <span class="op">=</span> <span class="fl">0</span>,
-  min_pip_cutoff <span class="op">=</span> <span class="cn">NULL</span>,
-  full_stat <span class="op">=</span> <span class="cn">TRUE</span>
-<span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fit_mt_susie</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">y</span>,</span>
+<span>  levels <span class="op">=</span> <span class="fl">15L</span>,</span>
+<span>  max_iter <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  min_iter <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  coverage <span class="op">=</span> <span class="fl">0.9</span>,</span>
+<span>  tol <span class="op">=</span> <span class="fl">1e-04</span>,</span>
+<span>  prior_var <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  lodds_cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_pip_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  full_stat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  local_residual <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -102,6 +103,10 @@
 
 <dt>full_stat</dt>
 <dd><p>keep full statistics</p></dd>
+
+
+<dt>local_residual</dt>
+<dd><p>locally calculate residuals</p></dd>
 
 </dl></div>
     <div id="value">
@@ -192,7 +197,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>

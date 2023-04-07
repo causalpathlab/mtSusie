@@ -9,7 +9,7 @@ mt_susie(
   Y,
   L = 5,
   W = NULL,
-  clamp = 4,
+  clamp = NULL,
   max.iter = 100,
   min.iter = 5,
   tol = 1e-08,
@@ -17,7 +17,8 @@ mt_susie(
   min.pip.cutoff = NULL,
   lodds.cutoff = 0,
   prior.var = 0.1,
-  output.full.stat = TRUE
+  output.full.stat = TRUE,
+  local.residual = TRUE
 )
 }
 \arguments{
@@ -29,7 +30,7 @@ mt_susie(
 
 \item{W}{n x k interaction terms matrix (default: NULL)}
 
-\item{clamp}{handle outliers by winsorization (default: 4)}
+\item{clamp}{handle outliers by winsorization (default: NULL)}
 
 \item{max.iter}{maximum iterations (default: 100)}
 
@@ -46,6 +47,8 @@ mt_susie(
 \item{prior.var}{prior level variance (default: 0.1)}
 
 \item{output.full.stat}{output every bit of the results (default: TRUE)}
+
+\item{local.residual}{calculate residual variance locally (default: TRUE)}
 }
 \value{
 a list of mtSusie estimates
@@ -75,8 +78,7 @@ In the \code{cs}, we have
 \item{z}{univariate z-score}
 \item{lfsr}{local false sign rate}
 \item{lodds}{log-odds ratio}
-
-\item{interaction}{interacting column index} (if W!=NULL)
+\item{interaction}{interacting column index (if W!=NULL)}
 }
 \description{
 Fit multi-trait SuSiE across several regression models

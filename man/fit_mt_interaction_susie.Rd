@@ -16,7 +16,8 @@ fit_mt_interaction_susie(
   prior_var = 0.1,
   lodds_cutoff = 0,
   min_pip_cutoff = NULL,
-  full_stat = TRUE
+  full_stat = TRUE,
+  local_residual = TRUE
 )
 }
 \arguments{
@@ -39,6 +40,8 @@ fit_mt_interaction_susie(
 \item{min_pip_cutoff}{minimum PIP cutoff in building credible sets}
 
 \item{full_stat}{keep full statistics}
+
+\item{local_residual}{locally calculate residuals}
 
 \item{levels}{number of "single" effects}
 }

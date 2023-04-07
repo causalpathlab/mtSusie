@@ -6,7 +6,7 @@
 #' @param Y n x m output matrix
 #' @param W n x k interaction terms matrix (default: NULL)
 #' @param L levels or expected num of independent factors (default: 5)
-#' @param clamp handle outliers by winsorization (default: 4)
+#' @param clamp handle outliers by winsorization (default: NULL)
 #' @param max.iter maximum iterations (default: 100)
 #' @param min.iter minimum iterations (default: 5)
 #' @param tol tolerance level check convergence (default: 1e-8)
@@ -15,6 +15,7 @@
 #' @param lodds.cutoff log-odds ratio cutoff for multi-trait factors (default: 0)
 #' @param prior.var prior level variance (default: 0.1)
 #' @param output.full.stat output every bit of the results (default: TRUE)
+#' @param local.residual calculate residual variance locally (default: TRUE)
 #'
 #' @return a list of mtSusie estimates
 #' 
@@ -43,15 +44,13 @@
 #' \item{z}{univariate z-score}
 #' \item{lfsr}{local false sign rate}
 #' \item{lodds}{log-odds ratio}
-#' 
-#' \item{interaction}{interacting column index} (if W!=NULL) 
-#' 
+#' \item{interaction}{interacting column index (if W!=NULL)}
 #' 
 #' @export
 #'
 mt_susie <- function(X, Y, L=5,
                      W = NULL,
-                     clamp = 4,
+                     clamp = NULL,
                      max.iter = 100,
                      min.iter = 5,
                      tol = 1e-8,
@@ -59,7 +58,8 @@ mt_susie <- function(X, Y, L=5,
                      min.pip.cutoff = NULL,
                      lodds.cutoff = 0,
                      prior.var = .1,
-                     output.full.stat = TRUE) {
+                     output.full.stat = TRUE,
+                     local.residual = TRUE) {
 
     xx <- apply(X, 2, scale)
     yy <- apply(Y, 2, scale)
@@ -87,7 +87,8 @@ mt_susie <- function(X, Y, L=5,
                             prior_var = prior.var,
                             lodds_cutoff = lodds.cutoff,
                             min_pip_cutoff = min.pip.cutoff,
-                            full_stat = output.full.stat)
+                            full_stat = output.full.stat,
+                            local_residual = local.residual)
     } else {
         lvl <- max(L, ceiling(L / ncol(W)) + 1)
         ret <- fit_mt_interaction_susie(X, Y, W,
@@ -99,7 +100,8 @@ mt_susie <- function(X, Y, L=5,
                                         prior_var = prior.var,
                                         lodds_cutoff = lodds.cutoff,
                                         min_pip_cutoff = min.pip.cutoff,
-                                        full_stat = output.full.stat)
+                                        full_stat = output.full.stat,
+                                        local_residual = local.residual)
     }
 
     message("Done")

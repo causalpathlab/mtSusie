@@ -12,6 +12,7 @@
 //' @param lodds_cutoff log-odds cutoff in trait selection steps
 //' @param min_pip_cutoff minimum PIP cutoff in building credible sets
 //' @param full_stat keep full statistics
+//' @param local_residual locally calculate residuals
 //'
 //'
 //' @return a list of mtSusie results
@@ -53,7 +54,8 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
              const double prior_var = 0.1,
              const double lodds_cutoff = 0,
              Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
-             const bool full_stat = true)
+             const bool full_stat = true,
+             const bool local_residual = true)
 {
 
     shared_regression_t model(y.rows(), y.cols(), x.cols(), levels, prior_var);
@@ -65,16 +67,24 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
                 "y and x have different numbers of rows");
 
     std::vector<Scalar> score;
-    score.reserve(max_iter);
+    score.reserve(max_iter + 1);
+
+    ////////////////////////////////
+    // Iterative Bayesian updates //
+    ////////////////////////////////
 
     for (Index iter = 0; iter < max_iter; ++iter) {
 
-        const Scalar curr =
-            update_shared_regression(model, stat, xx, yy, lodds_cutoff);
+        Scalar curr = update_shared_regression(model,
+                                               stat,
+                                               xx,
+                                               yy,
+                                               lodds_cutoff,
+                                               local_residual);
 
         if (iter > min_iter) {
-            const Scalar prev = score.at(score.size() - 1);
-            const Scalar diff = std::abs(prev - curr) / (std::abs(curr) + 1e-8);
+            Scalar prev = score.at(score.size() - 1);
+            Scalar diff = std::abs(prev - curr) / (std::abs(curr) + 1e-8);
             if (diff < tol) {
                 score.emplace_back(curr);
                 TLOG("Converged at " << iter << ", " << curr);
