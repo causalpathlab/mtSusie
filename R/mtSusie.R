@@ -90,7 +90,11 @@ mt_susie <- function(X, Y, L=5,
                             full_stat = output.full.stat,
                             local_residual = local.residual)
     } else {
-        lvl <- max(L, ceiling(L / ncol(W)) + 1)
+
+        lvl <- max(2, ceiling(L / ncol(W)) + 1)
+
+        message("Use ", lvl, " levels per each interaction term")
+
         ret <- fit_mt_interaction_susie(X, Y, W,
                                         levels_per_inter = lvl,
                                         max_iter = max.iter,

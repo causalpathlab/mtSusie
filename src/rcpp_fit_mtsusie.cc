@@ -93,6 +93,13 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
         }
         TLOG("mtSusie [" << iter << "] " << curr);
         score.emplace_back(curr);
+
+        try {
+            Rcpp::checkUserInterrupt();
+        } catch (Rcpp::internal::InterruptedException e) {
+            WLOG("Interruption by the user at t=" << iter);
+            break;
+        }
     }
 
     TLOG("Exporting model estimation results");

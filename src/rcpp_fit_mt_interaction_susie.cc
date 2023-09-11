@@ -89,12 +89,11 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     const Index L = model.lvl;
     const Index K = ww.cols();
     std::vector<int> interaction(L);
+    std::fill(interaction.begin(), interaction.end(), -1);
     for (Index l = 0; l < L; ++l) {
         if (l < (levels_per_inter * K)) {
-            const Index k = std::floor(l / levels_per_inter);
+            const int k = std::floor(l / levels_per_inter);
             interaction[l] = k; // it's an interaction term with k-th var.
-        } else {
-            interaction[l] = -1; // not an interaction term
         }
 
         TLOG("level [" << l << "] using "
@@ -125,6 +124,13 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
         }
         TLOG("mtSusie [" << iter << "] " << curr);
         score.emplace_back(curr);
+
+        try {
+            Rcpp::checkUserInterrupt();
+        } catch (Rcpp::internal::InterruptedException e) {
+            WLOG("Interruption by the user at t=" << iter);
+            break;
+        }
     }
 
     TLOG("Exporting model estimation results");
@@ -135,7 +141,7 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     {
         ivec inter_out;
         inter_out.reserve(interaction.size()); // give interaction term IDs
-        for (auto i : interaction)             //
+        for (int i : interaction)              //
             inter_out.emplace_back(i + 1);     // 1-based
         ret["interaction"] = inter_out;        //
     }
@@ -151,8 +157,9 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
         auto level_vec = Rcpp::as<ivec>(cs["levels"]);
         ivec inter_out;
         inter_out.reserve(level_vec.size());            //
-        for (auto l : level_vec) {                      //
-            inter_out.emplace_back(interaction[l] + 1); // 1-based
+        for (int l : level_vec) {                       //
+            const int j = l - 1;                        // 0-based
+            inter_out.emplace_back(interaction[j] + 1); // 1-based
         }
         cs["interaction"] = inter_out;
     }
