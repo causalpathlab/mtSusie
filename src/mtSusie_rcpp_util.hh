@@ -46,7 +46,7 @@ mt_susie_credible_sets(MODEL &model,
 {
     using svec = std::vector<Scalar>;
     using ivec = std::vector<Index>;
-    svec mean_list, var_list, lbf_list, alpha_list, z_list;
+    svec mean_list, sd_list, lbf_list, alpha_list, z_list;
     svec lfsr_list, lodds_list;
     ivec variants, traits, levels;
 
@@ -95,7 +95,7 @@ mt_susie_credible_sets(MODEL &model,
                 levels.emplace_back(l + 1);   // 1-based
                 alpha_list.emplace_back(alpha.at(j));
                 mean_list.emplace_back(mean(j, t));
-                var_list.emplace_back(var(j, t));
+                sd_list.emplace_back(std::sqrt(var(j, t)));
                 lbf_list.emplace_back(lbf(j, t));
                 z_list.emplace_back(zz(j, t));
                 lfsr_list.emplace_back(lfsr(t));
@@ -111,7 +111,7 @@ mt_susie_credible_sets(MODEL &model,
                               Rcpp::_["levels"] = levels,
                               Rcpp::_["alpha"] = alpha_list,
                               Rcpp::_["mean"] = mean_list,
-                              Rcpp::_["var"] = var_list,
+                              Rcpp::_["sd"] = sd_list,
                               Rcpp::_["lbf"] = lbf_list,
                               Rcpp::_["z"] = z_list,
                               Rcpp::_["lfsr"] = lfsr_list,

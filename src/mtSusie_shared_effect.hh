@@ -22,7 +22,7 @@ struct shared_effect_stat_t {
         , XtY_pm(p, m)
         , x2_p(p)
         , lodds_m(m)
-        , temp_m(m)
+        , alpha_m(m)
         , v0(1)
         , lbf_op(v0)
     {
@@ -50,7 +50,7 @@ struct shared_effect_stat_t {
     Mat XtY_pm;     // sufficient stat
     ColVec x2_p;    // sufficient stat
     RowVec lodds_m; // 1 x m log odds
-    RowVec temp_m;  // 1 x m temporary
+    RowVec alpha_m; // 1 x m log odds
 
     Scalar v0;
 
@@ -75,6 +75,18 @@ struct shared_effect_stat_t {
         const Scalar &v0;
         static constexpr Scalar tol = 1e-16;
     } lbf_op;
+
+    struct sigmoid_op_t {
+        Scalar operator()(const Scalar &x) const
+        {
+            if (x > 0.) {
+                return 1. / (1. + std::exp(-x));
+            } else {
+                const Scalar mass = std::exp(x);
+                return mass / (1. + mass);
+            }
+        }
+    } sigmoid_op;
 };
 
 template <typename STAT>
@@ -99,10 +111,9 @@ calibrate_prior_var(STAT &stat, const Scalar max_var = 100.)
 
 template <typename STAT>
 void
-calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
+calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
 {
-    const Index m = stat.lodds_m.size();
-    Index nretain = m, nretain_old = m;
+
     const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
     stat.alpha0_p.setConstant(p0);
 
@@ -119,42 +130,64 @@ calibrate_post_selection(STAT &stat, const Scalar lodds_cutoff)
         return; // nothing to do
     }
 
-    for (Index inner = 0; inner < m; ++inner) {
-        // b. Determine which outputs to include
-        // H1: sum_j log alpha[j,k] * alpha[j]
-        // H0: sum_j log alpha[j,k] * null[j]
+    for (Index inner = 0; inner < inner_iter; ++inner) {
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
-        nretain = (stat.lodds_m.array() > lodds_cutoff).count();
+        stat.alpha_m = stat.lodds_m.unaryExpr(stat.sigmoid_op);
 
-        // c. only some of the output variables > lodds
-        if (nretain > 0 && nretain < nretain_old) {
-            stat.lbf_p.setZero();
-            stat.lbf0_p.setZero();
-            for (Index k = 0; k < m; ++k) {
-                if (stat.lodds_m(k) > lodds_cutoff) {
-                    stat.lbf_p += stat.lbf_pm.col(k);
-                } else {
-                    stat.lbf0_p += stat.lbf_pm.col(k);
-                }
-            }
+        stat.lbf_p = stat.lbf_pm * stat.alpha_m.transpose();
+        stat.lbf0_p =
+            stat.lbf_pm.array().rowwise() * (-stat.alpha_m.array() + 1.);
 
-            {
-                const Scalar maxlbf = stat.lbf_p.maxCoeff();
-                stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
-                stat.alpha_p /= stat.alpha_p.sum();
-            }
+        {
+            const Scalar maxlbf = stat.lbf_p.maxCoeff();
+            stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+            stat.alpha_p /= stat.alpha_p.sum();
+        }
 
-            {
-                const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
-                stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
-                stat.alpha0_p /= stat.alpha0_p.sum();
-            }
-
-            nretain_old = nretain;
-        } else {
-            break;
+        {
+            const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
+            stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
+            stat.alpha0_p /= stat.alpha0_p.sum();
         }
     }
+
+    // A hard-thresholding version
+    //
+    // const Index m = stat.lodds_m.size();
+    // Index nretain = m, nretain_old = m;
+    // for (Index inner = 0; inner < m; ++inner) {
+    //     // b. Determine which outputs to include
+    //     // H1: sum_j log alpha[j,k] * alpha[j]
+    //     // H0: sum_j log alpha[j,k] * null[j]
+    //     stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() *
+    //     stat.lbf_pm; nretain = (stat.lodds_m.array() > lodds_cutoff).count();
+    //     // c. only some of the output variables > lodds
+    //     if (nretain > 0 && nretain < nretain_old) {
+    //         stat.lbf_p.setZero();
+    //         stat.lbf0_p.setZero();
+    //         for (Index k = 0; k < m; ++k) {
+    //             if (stat.lodds_m(k) > lodds_cutoff) {
+    //                 stat.lbf_p += stat.lbf_pm.col(k);
+    //             } else {
+    //                 stat.lbf0_p += stat.lbf_pm.col(k);
+    //             }
+    //         }
+    //         {
+    //             const Scalar maxlbf = stat.lbf_p.maxCoeff();
+    //             stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+    //             stat.alpha_p /= stat.alpha_p.sum();
+    //         }
+
+    //         {
+    //             const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
+    //             stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
+    //             stat.alpha0_p /= stat.alpha0_p.sum();
+    //         }
+    //         nretain_old = nretain;
+    //     } else {
+    //         break;
+    //     }
+    // }
 }
 
 template <typename STAT>
@@ -184,8 +217,8 @@ update_mle_stat(STAT &stat,
 
     // s2[j,k] = sigma[k]^2 / sum_i x[i,j]^2          (p x m)
     stat.mle_var_pm.setZero();
-    stat.mle_var_pm.array().rowwise() += residvar_m.row(0).array();
-    stat.mle_var_pm.array().colwise() /= stat.x2_p.array();
+    stat.mle_var_pm.array().rowwise() += residvar_m.array();
+    stat.mle_var_pm.array().colwise() /= (stat.x2_p.array() + eps);
     stat.mle_var_pm.array() += eps;
 }
 
@@ -193,6 +226,7 @@ template <typename STAT>
 void
 calibrate_post_stat(STAT &stat, const Scalar v0)
 {
+
     stat.post_var_pm = (stat.mle_var_pm.array().inverse() + 1. / v0).inverse();
 
     stat.post_mean_pm = stat.mle_mean_pm.cwiseProduct(stat.post_var_pm)
@@ -207,19 +241,16 @@ Scalar
 calculate_posterior_loglik(STAT &S,
                            const Eigen::MatrixBase<Derived1> &X,
                            const Eigen::MatrixBase<Derived2> &Y,
-                           const Eigen::MatrixBase<Derived3> &residvar_m,
-                           const Scalar lodds_cutoff)
+                           const Eigen::MatrixBase<Derived3> &residvar_m)
 {
-    Scalar llik = 0;
     const Scalar n = X.rows();
+    const Scalar eps = 1e-8;
 
-    // For each k in [m]: choose output with lodds > lodds_cutoff
-    // - Take average
-    Scalar denom = 0;
+    // For each k in [m], take average
+    Scalar num = 0, denom = 0;
     for (Index k = 0; k < Y.cols(); ++k) {
-        if (S.lodds_m(k) <= lodds_cutoff)
-            continue;
-        denom++;
+
+        const Scalar alpha_k = S.alpha_m(k);
 
         // 1. Square terms
         //    -0.5 * sum((Y - X * (mu * alpha))^2 / vR)
@@ -234,43 +265,42 @@ calculate_posterior_loglik(STAT &S,
         const Scalar evar = sum_safe(
             X.cwiseProduct(X) * S.post_var_pm.col(k).cwiseProduct(S.alpha_p));
 
-        llik -= 0.5 * (rss + evar) / residvar_m(k);
+        Scalar llik = -0.5 * (rss + evar) / (residvar_m(k) + eps);
 
         // 2. Log terms
         //    -0.5 * n * sum(log(2*pi*vR)
-        const Scalar eps = 1e-8;
         llik -= 0.5 * n * std::log(residvar_m(k) * 2. * M_PI + eps);
-    }
-    if (denom > 0)
-        llik /= denom;
-    return llik;
-}
 
-template <typename STAT, typename Derived1, typename Derived2>
-Scalar
-calculate_loglik(STAT &S,
-                 const Eigen::MatrixBase<Derived1> &Y,
-                 const Eigen::MatrixBase<Derived2> &residvar_m,
-                 const Scalar lodds_cutoff)
-{
-    Scalar llik = 0;
-    Scalar denom = 0;
-
-    const Scalar n = Y.rows();
-    const Scalar eps = 1e-8;
-    for (Index k = 0; k < Y.cols(); ++k) {
-        if (S.lodds_m(k) <= lodds_cutoff)
-            continue;
+        // average
         denom++;
-
-        llik -= 0.5 * sum_safe(Y.col(k).cwiseProduct(Y.col(k)) / residvar_m(k));
-        llik -= 0.5 * n * std::log(residvar_m(k) * 2. * M_PI + eps);
+        num += llik * alpha_k;
     }
-
     if (denom > 0)
-        llik /= denom;
-    return llik;
+        return num / denom;
+    return 0;
 }
+
+// template <typename STAT, typename Derived1, typename Derived2>
+// Scalar
+// calculate_loglik(STAT &S,
+//                  const Eigen::MatrixBase<Derived1> &Y,
+//                  const Eigen::MatrixBase<Derived2> &residvar_m)
+// {
+//     const Scalar n = Y.rows();
+//     const Scalar eps = 1e-8;
+//     Scalar num = 0, denom = 0;
+//     for (Index k = 0; k < Y.cols(); ++k) {
+//         Scalar llik =
+//             -0.5 * sum_safe(Y.col(k).cwiseProduct(Y.col(k)) / residvar_m(k));
+//         llik -= 0.5 * n * std::log(residvar_m(k) * 2. * M_PI + eps);
+//         // average
+//         denom += S.alpha_m(k);
+//         num += llik * S.alpha_m(k);
+//     }
+//     if (denom > 0)
+//         return num / denom;
+//     return 0;
+// }
 
 template <typename Derived1,
           typename Derived2,
@@ -282,21 +312,28 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     const Eigen::MatrixBase<Derived3> &rV,
     const Scalar v0,
     STAT &stat,
-    const Scalar locutoff = 0)
+    const bool do_stdize_lbf = false,
+    const bool do_calibrate_prior = false)
 {
     set_prior_var(stat, v0);
 
     // 1. Update sufficient statistics
     update_mle_stat(stat, X, Y, rV);
     calibrate_lbf(stat);
+    if (do_stdize_lbf) {
+        standardize_columns_inplace(stat.lbf_pm);
+    }
 
     // 2. Refine joint variable selection
-    calibrate_post_selection(stat, locutoff);
+    calibrate_post_selection(stat);
+
     // 3. Calibrate posterior statistics
     calibrate_post_stat(stat, v0);
-    calibrate_prior_var(stat);
 
-    return calculate_posterior_loglik(stat, X, Y, rV, locutoff);
+    if (do_calibrate_prior)
+        calibrate_prior_var(stat);
+
+    return calculate_posterior_loglik(stat, X, Y, rV);
     // Scalar llik = calculate_loglik(stat, Y, rV, locutoff);
     // WLOG(ellik << " " << llik << " " << (ellik - llik));
     // return ellik - llik;

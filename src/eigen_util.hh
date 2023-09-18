@@ -5,23 +5,19 @@
 
 #include "math.hh"
 #include "util.hh"
+#include "svd.hh"
 
-// #include <boost/random/normal_distribution.hpp>
-// #include <boost/random/binomial_distribution.hpp>
-// #include <boost/random/poisson_distribution.hpp>
-// #include <boost/random/gamma_distribution.hpp>
-// #include <boost/random/discrete_distribution.hpp>
-// #include <boost/random/uniform_int_distribution.hpp>
-// #include <boost/random/uniform_real_distribution.hpp>
-// #include <boost/random/uniform_01.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/binomial_distribution.hpp>
+#include <boost/random/poisson_distribution.hpp>
+#include <boost/random/gamma_distribution.hpp>
+#include <boost/random/discrete_distribution.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/uniform_01.hpp>
 
 #ifndef EIGEN_UTIL_HH_
 #define EIGEN_UTIL_HH_
-
-#define DIM(mat)                                                       \
-    {                                                                  \
-        Rcpp::Rcerr << mat.rows() << " x " << mat.cols() << std::endl; \
-    }
 
 template <typename T>
 struct softmax_op_t {
@@ -65,126 +61,126 @@ struct softmax_op_t {
         {
             Scalar v;
             if (log_a < log_b) {
-                v = log_b + fasterlog(1. + fasterexp(log_a - log_b));
+                v = log_b + fastlog(1. + fastexp(log_a - log_b));
             } else {
-                v = log_a + fasterlog(1. + fasterexp(log_b - log_a));
+                v = log_a + fastlog(1. + fastexp(log_b - log_a));
             }
             return v;
         }
     } log_sum_exp;
 
     struct exp_op_t {
-        const Scalar operator()(const Scalar x) const { return fasterexp(x); }
+        const Scalar operator()(const Scalar x) const { return fastexp(x); }
     } exp_op;
 };
 
-// template <typename T, typename RNG>
-// struct rowvec_sampler_t {
-//     using Scalar = typename T::Scalar;
-//     using Index = typename T::Index;
+template <typename T, typename RNG>
+struct rowvec_sampler_t {
+    using Scalar = typename T::Scalar;
+    using Index = typename T::Index;
 
-//     using disc_distrib = boost::random::discrete_distribution<>;
-//     using disc_param = disc_distrib::param_type;
-//     using RowVec = typename Eigen::internal::plain_row_type<T>::type;
+    using disc_distrib = boost::random::discrete_distribution<>;
+    using disc_param = disc_distrib::param_type;
+    using RowVec = typename Eigen::internal::plain_row_type<T>::type;
 
-//     explicit rowvec_sampler_t(RNG &_rng, const Index k)
-//         : rng(_rng)
-//         , K(k)
-//         , _prob(k)
-//     {
-//     }
+    explicit rowvec_sampler_t(RNG &_rng, const Index k)
+        : rng(_rng)
+        , K(k)
+        , _prob(k)
+    {
+    }
 
-//     inline Index operator()(const RowVec &prob)
-//     {
-//         Eigen::Map<RowVec>(&_prob[0], 1, K) = prob;
-//         return _rdisc(rng, disc_param(_prob));
-//     }
+    inline Index operator()(const RowVec &prob)
+    {
+        Eigen::Map<RowVec>(&_prob[0], 1, K) = prob;
+        return _rdisc(rng, disc_param(_prob));
+    }
 
-//     RNG &rng;
-//     const Index K;
-//     std::vector<Scalar> _prob;
-//     disc_distrib _rdisc;
-// };
+    RNG &rng;
+    const Index K;
+    std::vector<Scalar> _prob;
+    disc_distrib _rdisc;
+};
 
-// template <typename T, typename RNG>
-// struct matrix_sampler_t {
+template <typename T, typename RNG>
+struct matrix_sampler_t {
 
-//     using disc_distrib = boost::random::discrete_distribution<>;
-//     using disc_param = disc_distrib::param_type;
+    using disc_distrib = boost::random::discrete_distribution<>;
+    using disc_param = disc_distrib::param_type;
 
-//     using Scalar = typename T::Scalar;
-//     using Index = typename T::Index;
+    using Scalar = typename T::Scalar;
+    using Index = typename T::Index;
 
-//     using IndexVec = std::vector<Index>;
+    using IndexVec = std::vector<Index>;
 
-//     explicit matrix_sampler_t(RNG &_rng, const Index k)
-//         : rng(_rng)
-//         , K(k)
-//         , _weights(k)
-//         , _rdisc(_weights)
-//     {
-//     }
+    explicit matrix_sampler_t(RNG &_rng, const Index k)
+        : rng(_rng)
+        , K(k)
+        , _weights(k)
+        , _rdisc(_weights)
+    {
+    }
 
-//     template <typename Derived>
-//     const IndexVec &sample(const Eigen::MatrixBase<Derived> &W)
-//     {
-//         using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
-//         check_size(W);
+    template <typename Derived>
+    const IndexVec &sample(const Eigen::MatrixBase<Derived> &W)
+    {
+        using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
+        check_size(W);
 
-//         for (Index g = 0; g < W.rows(); ++g) {
-//             Eigen::Map<ROW>(&_weights[0], 1, K) = W.row(g);
-//             _sampled[g] = _rdisc(rng, disc_param(_weights));
-//         }
-//         return _sampled;
-//     }
+        for (Index g = 0; g < W.rows(); ++g) {
+            Eigen::Map<ROW>(&_weights[0], 1, K) = W.row(g);
+            _sampled[g] = _rdisc(rng, disc_param(_weights));
+        }
+        return _sampled;
+    }
 
-//     template <typename Derived>
-//     const IndexVec &sample_logit(const Eigen::MatrixBase<Derived> &W)
-//     {
-//         using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
-//         check_size(W);
+    template <typename Derived>
+    const IndexVec &sample_logit(const Eigen::MatrixBase<Derived> &W)
+    {
+        using ROW = typename Eigen::internal::plain_row_type<Derived>::type;
+        check_size(W);
 
-//         for (Index g = 0; g < W.rows(); ++g) {
-//             Eigen::Map<ROW>(&_weights[0], 1, K) = softmax.apply_row(W.row(g));
-//             _sampled[g] = _rdisc(rng, disc_param(_weights));
-//         }
-//         return _sampled;
-//     }
+        for (Index g = 0; g < W.rows(); ++g) {
+            Eigen::Map<ROW>(&_weights[0], 1, K) = softmax.apply_row(W.row(g));
+            _sampled[g] = _rdisc(rng, disc_param(_weights));
+        }
+        return _sampled;
+    }
 
-//     template <typename Derived>
-//     const IndexVec &operator()(const Eigen::MatrixBase<Derived> &W)
-//     {
-//         return sample(W);
-//     }
+    template <typename Derived>
+    const IndexVec &operator()(const Eigen::MatrixBase<Derived> &W)
+    {
+        return sample(W);
+    }
 
-//     template <typename Derived>
-//     void check_size(const Eigen::MatrixBase<Derived> &W)
-//     {
-//         if (W.rows() != _sampled.size())
-//             _sampled.resize(W.rows());
+    template <typename Derived>
+    void check_size(const Eigen::MatrixBase<Derived> &W)
+    {
+        if (W.rows() != _sampled.size())
+            _sampled.resize(W.rows());
 
-//         if (W.cols() != _weights.size())
-//             _weights.resize(W.cols());
-//     }
+        if (W.cols() != _weights.size())
+            _weights.resize(W.cols());
+    }
 
-//     const IndexVec &sampled() const { return _sampled; }
+    const IndexVec &sampled() const { return _sampled; }
 
-//     void copy_to(IndexVec &dst) const
-//     {
-//         if (dst.size() != _sampled.size())
-//             dst.resize(_sampled.size());
+    void copy_to(IndexVec &dst) const
+    {
+        if (dst.size() != _sampled.size())
+            dst.resize(_sampled.size());
 
-//         std::copy(std::begin(_sampled), std::end(_sampled), std::begin(dst));
-//     }
+        std::copy(std::begin(_sampled), std::end(_sampled), std::begin(dst));
+    }
 
-//     RNG &rng;
-//     const Index K;
-//     std::vector<Scalar> _weights;
-//     disc_distrib _rdisc;
-//     IndexVec _sampled;
+    RNG &rng;
+    const Index K;
+    std::vector<Scalar> _weights;
+    disc_distrib _rdisc;
+    IndexVec _sampled;
 
-//     softmax_op_t<T> softmax;
-// };
+    softmax_op_t<T> softmax;
+};
 
 template <typename EigenVec>
 inline auto
@@ -531,66 +527,236 @@ hcat(const Eigen::MatrixBase<Derived> &_left,
     return ret;
 }
 
+template <typename T>
+struct stdizer_t {
+    using Scalar = typename T::Scalar;
+    using Index = typename T::Index;
+    using RowVec = typename Eigen::internal::plain_row_type<T>::type;
+    using ColVec = typename Eigen::internal::plain_col_type<T>::type;
+
+    explicit stdizer_t(T &data_, const Scalar r_m = 1., const Scalar r_v = 1.)
+        : X(data_)
+        , D1(X.rows())
+        , D2(X.cols())
+        , rate_m(r_m)
+        , rate_v(r_v)
+        , rowMean(D2)
+        , rowSqMean(D2)
+        , rowMu(D2)
+        , rowSd(D2)
+        , rowNobs(D2)
+        , temp(D2)
+        , obs_val()
+        , is_obs_val()
+    {
+        rowMean.setZero();
+        rowMu.setZero();
+        rowSqMean.setZero();
+        rowSd.setOnes();
+    }
+
+private:
+    T &X;
+
+public:
+    const Index D1, D2;
+    const Scalar rate_m, rate_v;
+
+    const T &colwise(const Scalar eps = 1e-8)
+    {
+        rowNobs = X.unaryExpr(is_obs_val).colwise().sum();
+        rowNobs.array() += eps;
+
+        rowMean = X.unaryExpr(obs_val).colwise().sum().cwiseQuotient(rowNobs);
+
+        rowSqMean = (X.cwiseProduct(X))
+                        .unaryExpr(obs_val)
+                        .colwise()
+                        .sum()
+                        .cwiseQuotient(rowNobs);
+
+        if (rate_m > 0) {
+            rowMu *= (1. - rate_m);
+            rowMu += rate_m * rowMean;
+        }
+
+        if (rate_v > 0) {
+            temp = rowSqMean - rowMean.cwiseProduct(rowMean);
+            temp.array() += eps;
+            if (temp.minCoeff() < 0.) {
+                temp.array() -= temp.minCoeff();
+            }
+            rowSd *= (1. - rate_v);
+            rowSd += rate_v * temp.cwiseSqrt();
+        }
+
+        X.array().rowwise() -= rowMu.array();
+        X.array().rowwise() /= (rowSd.array() + eps);
+        return X;
+    }
+
+    const T &colwise_scale(const Scalar eps = 1e-8)
+    {
+        rowNobs = X.unaryExpr(is_obs_val).colwise().sum();
+        rowNobs.array() += eps;
+
+        rowMean = X.unaryExpr(obs_val).colwise().sum().cwiseQuotient(rowNobs);
+
+        rowSqMean = (X.cwiseProduct(X))
+                        .unaryExpr(obs_val)
+                        .colwise()
+                        .sum()
+                        .cwiseQuotient(rowNobs);
+
+        if (rate_m == 1) {
+            rowMu = rowMean;
+        } else if (rate_m > 0) {
+            rowMu *= (1. - rate_m);
+            rowMu += rate_m * rowMean;
+        }
+
+        temp = rowSqMean - rowMean.cwiseProduct(rowMean);
+        temp.array() += eps;
+        if (temp.minCoeff() < 0.) {
+            temp.array() -= temp.minCoeff();
+        }
+
+        if (rate_v > 0) {
+            rowSd += rate_v * temp.cwiseSqrt();
+        } else if (rate_v > 0) {
+            rowSd *= (1. - rate_v);
+            rowSd += rate_v * temp.cwiseSqrt();
+        }
+
+        X.array().rowwise() /= (rowSd.array() + eps);
+        return X;
+    }
+
+private:
+    RowVec rowMean, rowSqMean, rowMu, rowSd, rowNobs, temp;
+
+    struct obs_val_t {
+        const Scalar operator()(const Scalar &x) const
+        {
+            return std::isfinite(x) ? x : 0.;
+        }
+    } obs_val;
+
+    struct is_obs_val_t {
+        const Scalar operator()(const Scalar &x) const
+        {
+            return std::isfinite(x) ? 1. : 0.;
+        }
+    } is_obs_val;
+};
+
 template <typename Derived>
-inline Eigen::Matrix<typename Derived::Scalar,
-                     Eigen::Dynamic,
-                     Eigen::Dynamic,
-                     Eigen::ColMajor>
-standardize(const Eigen::MatrixBase<Derived> &Xraw,
-            const typename Derived::Scalar EPS = 1e-8)
+Eigen::Matrix<typename Derived::Scalar,
+              Eigen::Dynamic,
+              Eigen::Dynamic,
+              Eigen::ColMajor>
+standardize_columns(const Eigen::MatrixBase<Derived> &Xraw,
+                    const typename Derived::Scalar EPS = 1e-8)
 {
     using Index = typename Derived::Index;
     using Scalar = typename Derived::Scalar;
     using mat_t =
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>;
-    using RowVec = typename Eigen::internal::plain_row_type<Derived>::type;
 
     mat_t X(Xraw.rows(), Xraw.cols());
-
-    ////////////////
-    // Remove NaN //
-    ////////////////
-
-    const RowVec num_obs = Xraw.unaryExpr([](const Scalar x) {
-                                   return std::isfinite(x) ?
-                                       static_cast<Scalar>(1) :
-                                       static_cast<Scalar>(0);
-                               })
-                               .colwise()
-                               .sum();
-
-    X = Xraw.unaryExpr([](const Scalar x) {
-        return std::isfinite(x) ? x : static_cast<Scalar>(0);
-    });
-
-    //////////////////////////
-    // calculate statistics //
-    //////////////////////////
-
-    const RowVec x_mean = X.colwise().sum().cwiseQuotient(num_obs);
-    const RowVec x2_mean =
-        X.cwiseProduct(X).colwise().sum().cwiseQuotient(num_obs);
-    const RowVec x_sd = (x2_mean - x_mean.cwiseProduct(x_mean)).cwiseSqrt();
-
-    // standardize
-    for (Index j = 0; j < X.cols(); ++j) {
-        const Scalar mu = x_mean(j);
-        const Scalar sd = std::max(x_sd(j), EPS);
-        auto std_op = [&mu, &sd](const Scalar &x) -> Scalar {
-            const Scalar ret = static_cast<Scalar>((x - mu) / sd);
-            return ret;
-        };
-
-        // This must be done with original data
-        X.col(j) = X.col(j).unaryExpr(std_op).eval();
-    }
-
+    X = Xraw;
+    stdizer_t<mat_t> std_op(X);
+    std_op.colwise(EPS);
     return X;
 }
 
 template <typename Derived>
 void
-normalize_columns(Eigen::MatrixBase<Derived> &_mat)
+standardize_columns_inplace(Eigen::MatrixBase<Derived> &X_,
+                            const typename Derived::Scalar EPS = 1e-8)
+{
+    using Scalar = typename Derived::Scalar;
+
+    Derived X = X_.derived();
+    stdizer_t<Derived> std_op(X);
+    std_op.colwise(EPS);
+}
+
+template <typename Derived>
+void
+scale_columns_inplace(Eigen::MatrixBase<Derived> &X_,
+                      const typename Derived::Scalar EPS = 1e-8)
+{
+    using Scalar = typename Derived::Scalar;
+
+    Derived X = X_.derived();
+    stdizer_t<Derived> std_op(X);
+    std_op.colwise_scale(EPS);
+}
+
+template <typename Derived, typename Derived2>
+void
+residual_columns(Eigen::MatrixBase<Derived> &_yy,
+                 const Eigen::MatrixBase<Derived2> &_xx,
+                 const typename Derived::Scalar eps = 1e-8)
+{
+    using Index = typename Derived::Index;
+    using Scalar = typename Derived::Scalar;
+
+    const Derived Yraw = _yy.derived();
+    Derived &Yout = _yy.derived();
+    const Derived2 &X = _xx.derived();
+    using ColVec = typename Eigen::internal::plain_col_type<Derived>::type;
+
+    ASSERT(X.rows() == Yraw.rows(), "incompatible Y and X");
+
+    if (X.cols() < 1) {
+        // nothing to do
+    } else if (X.cols() == 1) {
+
+        const Scalar denom = X.cwiseProduct(X).sum();
+        for (Index k = 0; k < Yraw.cols(); ++k) {
+            const Scalar b =
+                (X.transpose() * Yraw.col(k)).sum() / (denom + eps);
+            Yout.col(k) = Yraw.col(k) - b * X.col(0);
+        }
+
+    } else {
+        const std::size_t r = std::min(X.cols(), Yraw.cols());
+
+        ColVec d;
+        Derived u;
+
+        if (X.rows() < 1000) {
+            Eigen::BDCSVD<Derived> svd_x;
+            svd_x.compute(X, Eigen::ComputeThinU | Eigen::ComputeThinV);
+            d = svd_x.singularValues();
+            u = svd_x.matrixU();
+        } else {
+            const std::size_t lu_iter = 5;
+            RandomizedSVD<Derived> svd_x(r, lu_iter);
+            svd_x.compute(X);
+            d = svd_x.singularValues();
+            u = svd_x.matrixU();
+        }
+
+        for (Index k = 0; k < r; ++k) {
+            if (d(k) < eps)
+                u.col(k).setZero();
+        }
+
+        // X theta = X inv(X'X) X' Y
+        //         = U D V' V inv(D^2) V' (U D V')' Y
+        //         = U inv(D) V' V D U' Y
+        //         = U U' Y
+
+        Yout = Yraw - u * u.transpose() * Yraw;
+    }
+}
+
+template <typename Derived>
+void
+normalize_columns_inplace(Eigen::MatrixBase<Derived> &_mat)
 {
     using Index = typename Derived::Index;
     using Scalar = typename Derived::Scalar;
@@ -606,7 +772,7 @@ normalize_columns(Eigen::MatrixBase<Derived> &_mat)
 
 template <typename Derived>
 void
-normalize_columns(Eigen::SparseMatrixBase<Derived> &_mat)
+normalize_columns_inplace(Eigen::SparseMatrixBase<Derived> &_mat)
 {
     using Index = typename Derived::Index;
     using Scalar = typename Derived::Scalar;
@@ -766,6 +932,75 @@ struct is_positive_op {
 };
 
 template <typename T>
+struct exp_op {
+    using Scalar = typename T::Scalar;
+    const Scalar operator()(const Scalar &x) const { return fasterexp(x); }
+};
+
+template <typename T>
+struct log1p_op {
+    using Scalar = typename T::Scalar;
+    const Scalar operator()(const Scalar &x) const { return fasterlog(1. + x); }
+};
+
+template <typename T>
+struct log_op {
+    using Scalar = typename T::Scalar;
+    const Scalar operator()(const Scalar &x) const
+    {
+        return x < 0. ? 0. : fasterlog(x);
+    }
+};
+
+template <typename T>
+struct safe_sqrt_op {
+    using Scalar = typename T::Scalar;
+    const Scalar operator()(const Scalar &x) const
+    {
+        return x <= 0. ? 0. : std::sqrt(x);
+    }
+};
+
+template <typename T>
+struct safe_div_op {
+    using Scalar = typename T::Scalar;
+    explicit safe_div_op(const Scalar _a0, const Scalar _b0)
+        : a0(_a0)
+        , b0(_b0)
+    {
+    }
+    const Scalar operator()(const Scalar &a, const Scalar &b) const
+    {
+        return (a + a0) / (b + b0);
+    }
+    const Scalar a0;
+    const Scalar b0;
+};
+
+template <typename T>
+struct at_least_one_op {
+    using Scalar = typename T::Scalar;
+    const Scalar operator()(const Scalar &x) const { return (x < 1.) ? 1. : x; }
+};
+
+template <typename T>
+struct at_least_zero_op {
+    using Scalar = typename T::Scalar;
+    const Scalar operator()(const Scalar &x) const { return (x < 0.) ? 0. : x; }
+};
+
+template <typename T>
+struct at_least_val_op {
+    using Scalar = typename T::Scalar;
+    explicit at_least_val_op(const Scalar _lb)
+        : lb(_lb)
+    {
+    }
+    const Scalar operator()(const Scalar &x) const { return (x < lb) ? lb : x; }
+    const Scalar lb;
+};
+
+template <typename T>
 struct clamp_op {
     using Scalar = typename T::Scalar;
     explicit clamp_op(const Scalar _lb, const Scalar _ub)
@@ -784,8 +1019,6 @@ struct clamp_op {
     }
     const Scalar lb;
     const Scalar ub;
-    static constexpr Scalar one_val = 1.0;
-    static constexpr Scalar zero_val = 0.0;
 };
 
 template <typename T>

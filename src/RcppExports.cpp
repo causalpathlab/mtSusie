@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // fit_mt_interaction_susie
-Rcpp::List fit_mt_interaction_susie(const Rcpp::NumericMatrix x, const Rcpp::NumericMatrix y, const Rcpp::NumericMatrix w, const std::size_t levels_per_inter, const std::size_t max_iter, const std::size_t min_iter, const double coverage, const double tol, const double prior_var, const double lodds_cutoff, Rcpp::Nullable<double> min_pip_cutoff, const bool full_stat, const bool local_residual);
-RcppExport SEXP _mtSusie_fit_mt_interaction_susie(SEXP xSEXP, SEXP ySEXP, SEXP wSEXP, SEXP levels_per_interSEXP, SEXP max_iterSEXP, SEXP min_iterSEXP, SEXP coverageSEXP, SEXP tolSEXP, SEXP prior_varSEXP, SEXP lodds_cutoffSEXP, SEXP min_pip_cutoffSEXP, SEXP full_statSEXP, SEXP local_residualSEXP) {
+Rcpp::List fit_mt_interaction_susie(const Rcpp::NumericMatrix x, const Rcpp::NumericMatrix y, const Rcpp::NumericMatrix w, const std::size_t levels_per_inter, const std::size_t max_iter, const std::size_t min_iter, const double coverage, const double tol, const double prior_var, Rcpp::Nullable<double> min_pip_cutoff, const bool full_stat, const bool stdize_lbf, const bool local_residual, const bool add_marginal);
+RcppExport SEXP _mtSusie_fit_mt_interaction_susie(SEXP xSEXP, SEXP ySEXP, SEXP wSEXP, SEXP levels_per_interSEXP, SEXP max_iterSEXP, SEXP min_iterSEXP, SEXP coverageSEXP, SEXP tolSEXP, SEXP prior_varSEXP, SEXP min_pip_cutoffSEXP, SEXP full_statSEXP, SEXP stdize_lbfSEXP, SEXP local_residualSEXP, SEXP add_marginalSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,17 +26,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type coverage(coverageSEXP);
     Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< const double >::type prior_var(prior_varSEXP);
-    Rcpp::traits::input_parameter< const double >::type lodds_cutoff(lodds_cutoffSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<double> >::type min_pip_cutoff(min_pip_cutoffSEXP);
     Rcpp::traits::input_parameter< const bool >::type full_stat(full_statSEXP);
+    Rcpp::traits::input_parameter< const bool >::type stdize_lbf(stdize_lbfSEXP);
     Rcpp::traits::input_parameter< const bool >::type local_residual(local_residualSEXP);
-    rcpp_result_gen = Rcpp::wrap(fit_mt_interaction_susie(x, y, w, levels_per_inter, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, local_residual));
+    Rcpp::traits::input_parameter< const bool >::type add_marginal(add_marginalSEXP);
+    rcpp_result_gen = Rcpp::wrap(fit_mt_interaction_susie(x, y, w, levels_per_inter, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, stdize_lbf, local_residual, add_marginal));
     return rcpp_result_gen;
 END_RCPP
 }
 // fit_mt_susie
-Rcpp::List fit_mt_susie(const Rcpp::NumericMatrix x, const Rcpp::NumericMatrix y, const std::size_t levels, const std::size_t max_iter, const std::size_t min_iter, const double coverage, const double tol, const double prior_var, const double lodds_cutoff, Rcpp::Nullable<double> min_pip_cutoff, const bool full_stat, const bool local_residual);
-RcppExport SEXP _mtSusie_fit_mt_susie(SEXP xSEXP, SEXP ySEXP, SEXP levelsSEXP, SEXP max_iterSEXP, SEXP min_iterSEXP, SEXP coverageSEXP, SEXP tolSEXP, SEXP prior_varSEXP, SEXP lodds_cutoffSEXP, SEXP min_pip_cutoffSEXP, SEXP full_statSEXP, SEXP local_residualSEXP) {
+Rcpp::List fit_mt_susie(const Rcpp::NumericMatrix x, const Rcpp::NumericMatrix y, const std::size_t levels, const std::size_t max_iter, const std::size_t min_iter, const double coverage, const double tol, const double prior_var, const double lodds_cutoff, Rcpp::Nullable<double> min_pip_cutoff, const bool full_stat, const bool stdize_lbf, const bool local_residual);
+RcppExport SEXP _mtSusie_fit_mt_susie(SEXP xSEXP, SEXP ySEXP, SEXP levelsSEXP, SEXP max_iterSEXP, SEXP min_iterSEXP, SEXP coverageSEXP, SEXP tolSEXP, SEXP prior_varSEXP, SEXP lodds_cutoffSEXP, SEXP min_pip_cutoffSEXP, SEXP full_statSEXP, SEXP stdize_lbfSEXP, SEXP local_residualSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -51,15 +52,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type lodds_cutoff(lodds_cutoffSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<double> >::type min_pip_cutoff(min_pip_cutoffSEXP);
     Rcpp::traits::input_parameter< const bool >::type full_stat(full_statSEXP);
+    Rcpp::traits::input_parameter< const bool >::type stdize_lbf(stdize_lbfSEXP);
     Rcpp::traits::input_parameter< const bool >::type local_residual(local_residualSEXP);
-    rcpp_result_gen = Rcpp::wrap(fit_mt_susie(x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, local_residual));
+    rcpp_result_gen = Rcpp::wrap(fit_mt_susie(x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, stdize_lbf, local_residual));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_mtSusie_fit_mt_interaction_susie", (DL_FUNC) &_mtSusie_fit_mt_interaction_susie, 13},
-    {"_mtSusie_fit_mt_susie", (DL_FUNC) &_mtSusie_fit_mt_susie, 12},
+    {"_mtSusie_fit_mt_interaction_susie", (DL_FUNC) &_mtSusie_fit_mt_interaction_susie, 14},
+    {"_mtSusie_fit_mt_susie", (DL_FUNC) &_mtSusie_fit_mt_susie, 13},
     {NULL, NULL, 0}
 };
 

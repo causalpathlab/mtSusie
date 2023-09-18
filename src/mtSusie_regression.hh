@@ -23,9 +23,10 @@ struct shared_regression_t {
         , partial_nm(num_sample, num_output)
         , prior_var(levels)
         , temp_m(1, num_output)
+        , temp2_m(1, num_output)
         , lodds_lm(levels, num_output)
     {
-        shared_pip_pl.setZero();
+        shared_pip_pl.setConstant(1. / static_cast<Scalar>(p));
         fitted_nm.setZero();
         residvar_m.setOnes();
         prior_var.setConstant(vv);
@@ -34,6 +35,13 @@ struct shared_regression_t {
         fill_mat_vec(var_pm_list, lvl, p, m);
         fill_mat_vec(z_pm_list, lvl, p, m);
         fill_mat_vec(lbf_pm_list, lvl, p, m);
+
+        for (std::size_t l = 0; l < lvl; ++l) {
+            _get(mu_pm_list, l).setZero();
+            _get(z_pm_list, l).setZero();
+            _get(lbf_pm_list, l).setZero();
+            _get(var_pm_list, l).setOnes();
+        }
     }
 
     const Index n, m, p, lvl;
@@ -44,6 +52,7 @@ struct shared_regression_t {
     Mat partial_nm;
     RowVec prior_var;
     RowVec temp_m;
+    RowVec temp2_m;
     Mat lodds_lm;
 
     mat_vec_t mu_pm_list;
@@ -156,20 +165,8 @@ calibrate_residual_variance(MODEL &model,
     colsum_safe((Y - model.fitted_nm).cwiseProduct(Y - model.fitted_nm),
                 model.residvar_m);
 
-    // X^2 * V[theta]
-    for (Index l = 0; l < model.lvl; ++l) {
-        const Mat &var = model.get_var(l); // p x m
-
-        colsum_safe(X.cwiseProduct(X) *
-                        ((var.cwiseProduct(var)).array() *
-                         model.shared_pip_pl.array().col(l))
-                            .matrix(),
-                    model.temp_m);
-
-        model.residvar_m += model.temp_m;
-    }
-
-    model.residvar_m = model.residvar_m / nn;
+    // Exact calculation of X^2 * V[theta] easily blow up!!
+    model.residvar_m /= nn;
 }
 
 template <typename MODEL, typename Derived, typename STAT>
@@ -211,11 +208,13 @@ update_shared_regression(MODEL &model,
                          STAT &stat,
                          const Eigen::MatrixBase<Derived> &X,
                          const Eigen::MatrixBase<Derived> &Y,
-                         const Scalar lodds_cutoff = 0,
-                         const bool local_residual = false)
+                         const bool local_residual = false,
+                         const bool do_stdize_lbf = false,
+                         const bool do_update_prior = false)
 {
     const Index L = model.lvl;
     Scalar score = 0.;
+
     for (Index l = 0; l < L; ++l) {
 
         // 1. discount previous l-th
@@ -226,12 +225,14 @@ update_shared_regression(MODEL &model,
             calibrate_residual_variance(model, X, model.partial_nm);
         }
 
-        score += SER(X,                       // 3. single-effect regression
-                     model.partial_nm,        //   - partial prediction
-                     model.residvar_m,        //   - residual variance
-                     model.get_v0(l),         //   - prior variance
-                     stat,                    //   - statistics
-                     lodds_cutoff);           //   - log-odds cutoff
+        score += SER(X,                // 3. single-effect regression
+                     model.partial_nm, //   - partial prediction
+                     model.residvar_m, //   - residual variance
+                     model.get_v0(l),  //   - prior variance
+                     stat,             //   - statistics
+                     do_stdize_lbf,    //
+                     do_update_prior); //
+
         update_model_stat(model, X, stat, l); // Put back the updated stats
     }
 

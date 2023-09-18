@@ -10,9 +10,9 @@
 //' @param min_iter   minimum iterations
 //' @param tol        tolerance
 //' @param prior_var  prior variance
-//' @param lodds_cutoff log-odds cutoff in trait selection steps
 //' @param min_pip_cutoff minimum PIP cutoff in building credible sets
 //' @param full_stat keep full statistics
+//' @param stdize_lbf trait-wise standardize LBF
 //' @param local_residual locally calculate residuals
 //'
 //'
@@ -55,16 +55,21 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                          const double coverage = .9,
                          const double tol = 1e-4,
                          const double prior_var = 0.1,
-                         const double lodds_cutoff = 0,
                          Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
                          const bool full_stat = true,
-                         const bool local_residual = true)
+                         const bool stdize_lbf = false,
+                         const bool local_residual = false,
+                         const bool add_marginal = true)
 {
 
     const Mat xx = Rcpp::as<Mat>(x), yy = Rcpp::as<Mat>(y);
     const Mat ww = Rcpp::as<Mat>(w);
 
-    const std::size_t levels = levels_per_inter * (ww.cols() + 1);
+    ASSERT_RETL(levels_per_inter > 0, "at least one per interaction term");
+
+    const std::size_t levels = add_marginal ?
+        (levels_per_inter * (ww.cols() + 1)) :
+        (levels_per_inter * ww.cols());
 
     shared_regression_t model(yy.rows(),
                               yy.cols(),
@@ -90,7 +95,9 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     const Index K = ww.cols();
     std::vector<int> interaction(L);
     std::fill(interaction.begin(), interaction.end(), -1);
+
     for (Index l = 0; l < L; ++l) {
+
         if (l < (levels_per_inter * K)) {
             const int k = std::floor(l / levels_per_inter);
             interaction[l] = k; // it's an interaction term with k-th var.
@@ -110,7 +117,7 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                                                            ww,
                                                            interaction,
                                                            levels_per_inter,
-                                                           lodds_cutoff,
+                                                           stdize_lbf,
                                                            local_residual);
 
         if (iter > min_iter) {
@@ -164,6 +171,7 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
         cs["interaction"] = inter_out;
     }
     ret["cs"] = cs;
+    ret["score"] = score;
 
     TLOG("Done");
     return ret;

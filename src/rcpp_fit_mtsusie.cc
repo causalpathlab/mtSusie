@@ -12,6 +12,7 @@
 //' @param lodds_cutoff log-odds cutoff in trait selection steps
 //' @param min_pip_cutoff minimum PIP cutoff in building credible sets
 //' @param full_stat keep full statistics
+//' @param stdize_lbf trait-wise standardize LBF
 //' @param local_residual locally calculate residuals
 //'
 //'
@@ -55,7 +56,8 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
              const double lodds_cutoff = 0,
              Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
              const bool full_stat = true,
-             const bool local_residual = true)
+             const bool stdize_lbf = false,
+             const bool local_residual = false)
 {
 
     shared_regression_t model(y.rows(), y.cols(), x.cols(), levels, prior_var);
@@ -79,7 +81,7 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
                                                stat,
                                                xx,
                                                yy,
-                                               lodds_cutoff,
+                                               stdize_lbf,
                                                local_residual);
 
         if (iter > min_iter) {
@@ -113,6 +115,7 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
         (1. / static_cast<Scalar>(xx.cols()));
 
     ret["cs"] = mt_susie_credible_sets(model, coverage, _pip_cutoff);
+    ret["score"] = score;
 
     TLOG("Done");
     return ret;

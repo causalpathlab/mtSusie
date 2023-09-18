@@ -10,8 +10,6 @@ calibrate_residual_variance(MODEL &model,
                             const std::vector<int> &interaction)
 {
 
-    Mat WX(X.rows(), X.cols()); // w[i,k] * x[i,j]
-
     const Index L = model.lvl;
     const Index K = W.cols();
     const Scalar nn = X.rows();
@@ -21,32 +19,8 @@ calibrate_residual_variance(MODEL &model,
     colsum_safe((Y - model.fitted_nm).cwiseProduct(Y - model.fitted_nm),
                 model.residvar_m);
 
-    // X^2 * V[theta]
-    for (Index l = 0; l < L; ++l) {
-        const Mat &var = model.get_var(l); // p x m
-
-        const Index k = interaction.at(l);
-        if (k >= 0) {
-            colsum_safe(((X.array().colwise() * W.col(k).array()) *
-                         (X.array().colwise() * W.col(k).array()))
-                                .matrix() *
-                            ((var.cwiseProduct(var)).array() *
-                             model.shared_pip_pl.array().col(l))
-                                .matrix(),
-                        model.temp_m);
-
-        } else { //
-            colsum_safe(X.cwiseProduct(X) *
-                            ((var.cwiseProduct(var)).array() *
-                             model.shared_pip_pl.array().col(l))
-                                .matrix(),
-                        model.temp_m);
-        }
-
-        model.residvar_m += model.temp_m;
-    }
-
-    model.residvar_m = model.residvar_m / nn;
+    // Exact calculation of X^2 * V[theta] easily blow up!!
+    model.residvar_m /= nn;
 }
 
 template <typename MODEL, typename STAT, typename Derived>
@@ -58,8 +32,9 @@ update_shared_interaction_regression(MODEL &model,
                                      const Eigen::MatrixBase<Derived> &W,
                                      const std::vector<int> &interaction,
                                      const Index levels_per_inter,
-                                     const Scalar lodds_cutoff = 0,
-                                     const bool local_residual = false)
+                                     const bool local_residual = false,
+                                     const bool do_stdize_lbf = false,
+                                     const bool do_update_prior = false)
 
 {
 
@@ -92,7 +67,8 @@ update_shared_interaction_regression(MODEL &model,
                      model.residvar_m, //   - residual variance
                      model.get_v0(l),  //   - prior variance
                      stat,             //   - statistics
-                     lodds_cutoff);    //   - log-odds cutoff
+                     do_stdize_lbf,    //
+                     do_update_prior); //
 
         update_model_stat(model, WX, stat, l); // Put back the updated stat
     }
