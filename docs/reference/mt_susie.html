@@ -28,6 +28,16 @@
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/mtSusieInter.html">Multi-trait SuSiE with interaction terms</a>
+    </li>
+  </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -58,10 +68,11 @@
 <span>  tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
 <span>  coverage <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  min.pip.cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  lodds.cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  prior.var <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  stdize.lbf <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  prior.var <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  output.full.stat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  local.residual <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  local.residual <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  add.marginal <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,12 +118,12 @@
 <dd><p>min PIP to report (default: 1/p)</p></dd>
 
 
-<dt>lodds.cutoff</dt>
-<dd><p>log-odds ratio cutoff for multi-trait factors (default: 0)</p></dd>
+<dt>stdize.lbf</dt>
+<dd><p>trait-wise standardize LBF</p></dd>
 
 
 <dt>prior.var</dt>
-<dd><p>prior level variance (default: 0.1)</p></dd>
+<dd><p>prior level variance (default: 1)</p></dd>
 
 
 <dt>output.full.stat</dt>
@@ -121,6 +132,10 @@
 
 <dt>local.residual</dt>
 <dd><p>calculate residual variance locally (default: TRUE)</p></dd>
+
+
+<dt>add.marginal</dt>
+<dd><p>will add marginal levels for interaction analysis (default: TRUE)</p></dd>
 
 </dl></div>
     <div id="value">
@@ -216,7 +231,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

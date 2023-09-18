@@ -99,7 +99,7 @@ Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is 
 
 ```{r}
 library(mtSusie)
-mt.susie <- mt_susie(X, Y, L=15)
+mt.susie <- mt_susie(X, Y, L=15, prior.var = 1e-2)
 ```
 
 Which traits do we combine at each level?

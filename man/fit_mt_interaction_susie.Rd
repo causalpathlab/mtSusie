@@ -14,10 +14,11 @@ fit_mt_interaction_susie(
   coverage = 0.9,
   tol = 1e-04,
   prior_var = 0.1,
-  lodds_cutoff = 0,
   min_pip_cutoff = NULL,
   full_stat = TRUE,
-  local_residual = TRUE
+  stdize_lbf = FALSE,
+  local_residual = FALSE,
+  add_marginal = TRUE
 )
 }
 \arguments{
@@ -35,11 +36,11 @@ fit_mt_interaction_susie(
 
 \item{prior_var}{prior variance}
 
-\item{lodds_cutoff}{log-odds cutoff in trait selection steps}
-
 \item{min_pip_cutoff}{minimum PIP cutoff in building credible sets}
 
 \item{full_stat}{keep full statistics}
+
+\item{stdize_lbf}{trait-wise standardize LBF}
 
 \item{local_residual}{locally calculate residuals}
 

@@ -45,6 +45,18 @@
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../articles/mtSusieInter.html">Multi-trait SuSiE with interaction terms</a>
+    </li>
+  </ul>
+</li>
       </ul>
 <ul class="nav navbar-nav navbar-right"></ul>
 </div>
@@ -56,7 +68,7 @@
 
       
 
-      </header><script src="mtSusie_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Multi-trait SuSiE</h1>
@@ -149,7 +161,7 @@
 <p>Here comes our <code>mtSusie</code> (multi-trait Sum of Single Effects) model. The idea is a simple modification to the original <code>susieR</code> method. For each level/layer, we aggregate the log Bayes Factors across multiple traits. Yes, it was that simple.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">mtSusie</span><span class="op">)</span></span>
-<span><span class="va">mt.susie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_susie.html">mt_susie</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, L<span class="op">=</span><span class="fl">15</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">mt.susie</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mt_susie.html">mt_susie</a></span><span class="op">(</span><span class="va">X</span>, <span class="va">Y</span>, L<span class="op">=</span><span class="fl">15</span>, prior.var <span class="op">=</span> <span class="fl">1e-2</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Fitting mtSusie ...</span></span></code></pre>
 <pre><code><span><span class="co">## Done</span></span></code></pre>
 <p>Which traits do we combine at each level?</p>
@@ -208,7 +220,7 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>

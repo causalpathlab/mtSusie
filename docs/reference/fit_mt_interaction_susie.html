@@ -28,6 +28,16 @@
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Articles
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu"><li>
+      <a href="../articles/mtSusieInter.html">Multi-trait SuSiE with interaction terms</a>
+    </li>
+  </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -57,10 +67,11 @@
 <span>  coverage <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">1e-04</span>,</span>
 <span>  prior_var <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  lodds_cutoff <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  min_pip_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  full_stat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  local_residual <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  stdize_lbf <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  local_residual <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  add_marginal <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -94,16 +105,16 @@
 <dd><p>prior variance</p></dd>
 
 
-<dt>lodds_cutoff</dt>
-<dd><p>log-odds cutoff in trait selection steps</p></dd>
-
-
 <dt>min_pip_cutoff</dt>
 <dd><p>minimum PIP cutoff in building credible sets</p></dd>
 
 
 <dt>full_stat</dt>
 <dd><p>keep full statistics</p></dd>
+
+
+<dt>stdize_lbf</dt>
+<dd><p>trait-wise standardize LBF</p></dd>
 
 
 <dt>local_residual</dt>
@@ -205,7 +216,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer></div>

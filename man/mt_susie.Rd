@@ -15,10 +15,11 @@ mt_susie(
   tol = 1e-08,
   coverage = 0.9,
   min.pip.cutoff = NULL,
-  lodds.cutoff = 0,
-  prior.var = 0.1,
+  stdize.lbf = FALSE,
+  prior.var = 1,
   output.full.stat = TRUE,
-  local.residual = TRUE
+  local.residual = FALSE,
+  add.marginal = TRUE
 )
 }
 \arguments{
@@ -42,13 +43,15 @@ mt_susie(
 
 \item{min.pip.cutoff}{min PIP to report (default: 1/p)}
 
-\item{lodds.cutoff}{log-odds ratio cutoff for multi-trait factors (default: 0)}
+\item{stdize.lbf}{trait-wise standardize LBF}
 
-\item{prior.var}{prior level variance (default: 0.1)}
+\item{prior.var}{prior level variance (default: 1)}
 
 \item{output.full.stat}{output every bit of the results (default: TRUE)}
 
 \item{local.residual}{calculate residual variance locally (default: TRUE)}
+
+\item{add.marginal}{will add marginal levels for interaction analysis (default: TRUE)}
 }
 \value{
 a list of mtSusie estimates
