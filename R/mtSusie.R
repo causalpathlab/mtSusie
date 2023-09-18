@@ -13,7 +13,7 @@
 #' @param coverage targeted PIP coverage per each level (default: 0.9)
 #' @param min.pip.cutoff min PIP to report (default: 1/p)
 #' @param stdize.lbf trait-wise standardize LBF
-#' @param prior.var prior level variance (default: 1)
+#' @param prior.var prior level variance (default: 1e-2)
 #' @param output.full.stat output every bit of the results (default: TRUE)
 #' @param local.residual calculate residual variance locally (default: TRUE)
 #' @param add.marginal will add marginal levels for interaction analysis (default: TRUE)
@@ -58,7 +58,7 @@ mt_susie <- function(X, Y, L=5,
                      coverage = .9,
                      min.pip.cutoff = NULL,
                      stdize.lbf = FALSE,
-                     prior.var = 1,
+                     prior.var = 1e-2,
                      output.full.stat = TRUE,
                      local.residual = FALSE,
                      add.marginal = TRUE) {
