@@ -16,7 +16,7 @@ mt_susie(
   coverage = 0.9,
   min.pip.cutoff = NULL,
   stdize.lbf = FALSE,
-  prior.var = 1,
+  prior.var = 0.01,
   output.full.stat = TRUE,
   local.residual = FALSE,
   add.marginal = TRUE
@@ -45,7 +45,7 @@ mt_susie(
 
 \item{stdize.lbf}{trait-wise standardize LBF}
 
-\item{prior.var}{prior level variance (default: 1)}
+\item{prior.var}{prior level variance (default: 1e-2)}
 
 \item{output.full.stat}{output every bit of the results (default: TRUE)}
 
