@@ -17,7 +17,10 @@ fit_mt_susie(
   min_pip_cutoff = NULL,
   full_stat = TRUE,
   stdize_lbf = FALSE,
-  local_residual = FALSE
+  local_residual = FALSE,
+  update_prior = FALSE,
+  do_hard_selection = FALSE,
+  hard_lodds_cutoff = 0
 )
 }
 \arguments{
@@ -44,6 +47,8 @@ fit_mt_susie(
 \item{stdize_lbf}{trait-wise standardize LBF}
 
 \item{local_residual}{locally calculate residuals}
+
+\item{update_prior}{update prior variance or not}
 }
 \value{
 a list of mtSusie results

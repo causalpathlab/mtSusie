@@ -16,7 +16,10 @@
 #' @param prior.var prior level variance (default: 1e-2)
 #' @param output.full.stat output every bit of the results (default: TRUE)
 #' @param local.residual calculate residual variance locally (default: TRUE)
+#' @param update.prior update prior variance (default: TRUE)
 #' @param add.marginal will add marginal levels for interaction analysis (default: TRUE)
+#' @param hard.selection trait selection by hard thresholding (default: FALSE)
+#' @param hard.lodds.cutoff (default: 0)
 #'
 #' @return a list of mtSusie estimates
 #' 
@@ -61,7 +64,10 @@ mt_susie <- function(X, Y, L=5,
                      prior.var = 1e-2,
                      output.full.stat = TRUE,
                      local.residual = FALSE,
-                     add.marginal = TRUE) {
+                     update.prior = TRUE,
+                     add.marginal = TRUE,
+                     hard.selection = FALSE,
+                     hard.lodds.cutoff = 0) {
 
     xx <- apply(X, 2, scale)
     yy <- apply(Y, 2, scale)
@@ -90,7 +96,10 @@ mt_susie <- function(X, Y, L=5,
                             stdize_lbf = stdize.lbf,
                             min_pip_cutoff = min.pip.cutoff,
                             full_stat = output.full.stat,
-                            local_residual = local.residual)
+                            local_residual = local.residual,
+                            update_prior = update.prior,
+                            do_hard_selection = hard.selection,
+                            hard_lodds_cutoff = hard.lodds.cutoff)
     } else {
 
         lvl.per.inter <- ceiling(L / ncol(W))
@@ -111,7 +120,9 @@ mt_susie <- function(X, Y, L=5,
                                         min_pip_cutoff = min.pip.cutoff,
                                         full_stat = output.full.stat,
                                         local_residual = local.residual,
-                                        add_marginal = add.marginal)
+                                        add_marginal = add.marginal,
+                                        do_hard_selection = hard.selection,
+                                        hard_lodds_cutoff = hard.lodds.cutoff)
     }
 
     message("Done")

@@ -28,16 +28,6 @@
 <li>
   <a href="../reference/index.html">Reference</a>
 </li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/mtSusieInter.html">Multi-trait SuSiE with interaction terms</a>
-    </li>
-  </ul></li>
       </ul><ul class="nav navbar-nav navbar-right"></ul></div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -57,23 +47,26 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mt_susie</span><span class="op">(</span></span>
-<span>  <span class="va">X</span>,</span>
-<span>  <span class="va">Y</span>,</span>
-<span>  L <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  W <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  clamp <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  max.iter <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>  min.iter <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  tol <span class="op">=</span> <span class="fl">1e-08</span>,</span>
-<span>  coverage <span class="op">=</span> <span class="fl">0.9</span>,</span>
-<span>  min.pip.cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  stdize.lbf <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  prior.var <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  output.full.stat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  local.residual <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  add.marginal <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">mt_susie</span><span class="op">(</span>
+  <span class="va">X</span>,
+  <span class="va">Y</span>,
+  L <span class="op">=</span> <span class="fl">5</span>,
+  W <span class="op">=</span> <span class="cn">NULL</span>,
+  clamp <span class="op">=</span> <span class="cn">NULL</span>,
+  max.iter <span class="op">=</span> <span class="fl">100</span>,
+  min.iter <span class="op">=</span> <span class="fl">5</span>,
+  tol <span class="op">=</span> <span class="fl">1e-08</span>,
+  coverage <span class="op">=</span> <span class="fl">0.9</span>,
+  min.pip.cutoff <span class="op">=</span> <span class="cn">NULL</span>,
+  stdize.lbf <span class="op">=</span> <span class="cn">FALSE</span>,
+  prior.var <span class="op">=</span> <span class="fl">0.01</span>,
+  output.full.stat <span class="op">=</span> <span class="cn">TRUE</span>,
+  local.residual <span class="op">=</span> <span class="cn">FALSE</span>,
+  update.prior <span class="op">=</span> <span class="cn">TRUE</span>,
+  add.marginal <span class="op">=</span> <span class="cn">TRUE</span>,
+  hard.selection <span class="op">=</span> <span class="cn">FALSE</span>,
+  hard.lodds.cutoff <span class="op">=</span> <span class="fl">0</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -123,7 +116,7 @@
 
 
 <dt>prior.var</dt>
-<dd><p>prior level variance (default: 1)</p></dd>
+<dd><p>prior level variance (default: 1e-2)</p></dd>
 
 
 <dt>output.full.stat</dt>
@@ -134,8 +127,20 @@
 <dd><p>calculate residual variance locally (default: TRUE)</p></dd>
 
 
+<dt>update.prior</dt>
+<dd><p>update prior variance (default: TRUE)</p></dd>
+
+
 <dt>add.marginal</dt>
 <dd><p>will add marginal levels for interaction analysis (default: TRUE)</p></dd>
+
+
+<dt>hard.selection</dt>
+<dd><p>trait selection by hard thresholding (default: FALSE)</p></dd>
+
+
+<dt>hard.lodds.cutoff</dt>
+<dd><p>(default: 0)</p></dd>
 
 </dl></div>
     <div id="value">

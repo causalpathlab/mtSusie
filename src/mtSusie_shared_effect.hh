@@ -98,7 +98,7 @@ set_prior_var(STAT &stat, const Scalar v0)
 
 template <typename STAT>
 void
-calibrate_prior_var(STAT &stat, const Scalar max_var = 100.)
+calibrate_prior_var(STAT &stat, const Scalar max_var = 10000.)
 {
     stat.v0 = sum_safe(
         (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm)
@@ -127,16 +127,24 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
 
     if (stat.m == 1) { // single output
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
+        stat.alpha_m.setConstant(1.);
         return; // nothing to do
     }
 
     for (Index inner = 0; inner < inner_iter; ++inner) {
+
+        // b. Select traits (probabilistically)
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
         stat.alpha_m = stat.lodds_m.unaryExpr(stat.sigmoid_op);
 
+        // c. Take weighted average for each variant
         stat.lbf_p = stat.lbf_pm * stat.alpha_m.transpose();
+
+        // d. If variants were selected for the other traits
         stat.lbf0_p =
-            stat.lbf_pm.array().rowwise() * (-stat.alpha_m.array() + 1.);
+            (stat.lbf_pm.array().rowwise() * (-stat.alpha_m.array() + 1.))
+                .rowwise()
+                .sum();
 
         {
             const Scalar maxlbf = stat.lbf_p.maxCoeff();
@@ -150,44 +158,61 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
             stat.alpha0_p /= stat.alpha0_p.sum();
         }
     }
+}
 
-    // A hard-thresholding version
-    //
-    // const Index m = stat.lodds_m.size();
-    // Index nretain = m, nretain_old = m;
-    // for (Index inner = 0; inner < m; ++inner) {
-    //     // b. Determine which outputs to include
-    //     // H1: sum_j log alpha[j,k] * alpha[j]
-    //     // H0: sum_j log alpha[j,k] * null[j]
-    //     stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() *
-    //     stat.lbf_pm; nretain = (stat.lodds_m.array() > lodds_cutoff).count();
-    //     // c. only some of the output variables > lodds
-    //     if (nretain > 0 && nretain < nretain_old) {
-    //         stat.lbf_p.setZero();
-    //         stat.lbf0_p.setZero();
-    //         for (Index k = 0; k < m; ++k) {
-    //             if (stat.lodds_m(k) > lodds_cutoff) {
-    //                 stat.lbf_p += stat.lbf_pm.col(k);
-    //             } else {
-    //                 stat.lbf0_p += stat.lbf_pm.col(k);
-    //             }
-    //         }
-    //         {
-    //             const Scalar maxlbf = stat.lbf_p.maxCoeff();
-    //             stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
-    //             stat.alpha_p /= stat.alpha_p.sum();
-    //         }
+template <typename STAT>
+void
+calibrate_post_selection_hard(STAT &stat,
+                              const Index inner_iter = 20,
+                              const Scalar lodds_cutoff = 0)
+{
 
-    //         {
-    //             const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
-    //             stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
-    //             stat.alpha0_p /= stat.alpha0_p.sum();
-    //         }
-    //         nretain_old = nretain;
-    //     } else {
-    //         break;
-    //     }
-    // }
+    const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
+    stat.alpha0_p.setConstant(p0);
+
+    // a. Initialization of shared PIP
+    {
+        stat.lbf_p = stat.lbf_pm.rowwise().sum();
+        Scalar maxlbf = stat.lbf_p.maxCoeff();
+        stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+        stat.alpha_p /= stat.alpha_p.sum();
+    }
+
+    const Index m = stat.lodds_m.size();
+    Index nretain = m, nretain_old = m;
+    for (Index inner = 0; inner < m; ++inner) {
+        // b. Determine which outputs to include
+        // H1: sum_j log alpha[j,k] * alpha[j]
+        // H0: sum_j log alpha[j,k] * null[j]
+        stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
+        nretain = (stat.lodds_m.array() > lodds_cutoff).count();
+        // c. only some of the output variables > lodds
+        if (nretain > 0 && nretain < nretain_old) {
+            stat.lbf_p.setZero();
+            stat.lbf0_p.setZero();
+            for (Index k = 0; k < m; ++k) {
+                if (stat.lodds_m(k) > lodds_cutoff) {
+                    stat.lbf_p += stat.lbf_pm.col(k);
+                } else {
+                    stat.lbf0_p += stat.lbf_pm.col(k);
+                }
+            }
+            {
+                const Scalar maxlbf = stat.lbf_p.maxCoeff();
+                stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+                stat.alpha_p /= stat.alpha_p.sum();
+            }
+
+            {
+                const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
+                stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
+                stat.alpha0_p /= stat.alpha0_p.sum();
+            }
+            nretain_old = nretain;
+        } else {
+            break;
+        }
+    }
 }
 
 template <typename STAT>
@@ -272,11 +297,12 @@ calculate_posterior_loglik(STAT &S,
         llik -= 0.5 * n * std::log(residvar_m(k) * 2. * M_PI + eps);
 
         // average
-        denom++;
+        denom += alpha_k;
         num += llik * alpha_k;
     }
-    if (denom > 0)
+    if (denom > 0) {
         return num / denom;
+    }
     return 0;
 }
 
@@ -313,7 +339,9 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     const Scalar v0,
     STAT &stat,
     const bool do_stdize_lbf = false,
-    const bool do_calibrate_prior = false)
+    const bool do_calibrate_prior = false,
+    const bool do_hard_selection = false,
+    const Scalar hard_lodds_cutoff = 0)
 {
     set_prior_var(stat, v0);
 
@@ -325,11 +353,14 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     }
 
     // 2. Refine joint variable selection
-    calibrate_post_selection(stat);
+    if (do_hard_selection) {
+        calibrate_post_selection_hard(stat, hard_lodds_cutoff);
+    } else {
+        calibrate_post_selection(stat);
+    }
 
     // 3. Calibrate posterior statistics
     calibrate_post_stat(stat, v0);
-
     if (do_calibrate_prior)
         calibrate_prior_var(stat);
 

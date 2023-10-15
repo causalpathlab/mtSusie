@@ -18,7 +18,10 @@ fit_mt_interaction_susie(
   full_stat = TRUE,
   stdize_lbf = FALSE,
   local_residual = FALSE,
-  add_marginal = TRUE
+  add_marginal = TRUE,
+  update_prior = FALSE,
+  do_hard_selection = FALSE,
+  hard_lodds_cutoff = 0
 )
 }
 \arguments{
@@ -43,6 +46,8 @@ fit_mt_interaction_susie(
 \item{stdize_lbf}{trait-wise standardize LBF}
 
 \item{local_residual}{locally calculate residuals}
+
+\item{update_prior}{update prior variance or not}
 
 \item{levels}{number of "single" effects}
 }

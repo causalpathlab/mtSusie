@@ -34,7 +34,9 @@ update_shared_interaction_regression(MODEL &model,
                                      const Index levels_per_inter,
                                      const bool local_residual = false,
                                      const bool do_stdize_lbf = false,
-                                     const bool do_update_prior = false)
+                                     const bool do_update_prior = false,
+                                     const bool do_hard_selection = false,
+                                     const Scalar hard_lodds_cutoff = 0)
 
 {
 
@@ -62,13 +64,15 @@ update_shared_interaction_regression(MODEL &model,
                                         interaction);
         }
 
-        score += SER(WX,               // 3. single-effect regr
-                     model.partial_nm, //   - partial prediction
-                     model.residvar_m, //   - residual variance
-                     model.get_v0(l),  //   - prior variance
-                     stat,             //   - statistics
-                     do_stdize_lbf,    //
-                     do_update_prior); //
+        score += SER(WX,                 // 3. single-effect regr
+                     model.partial_nm,   //   - partial prediction
+                     model.residvar_m,   //   - residual variance
+                     model.get_v0(l),    //   - prior variance
+                     stat,               //   - statistics
+                     do_stdize_lbf,      //
+                     do_update_prior,    //
+                     do_hard_selection,  //
+                     hard_lodds_cutoff); //
 
         update_model_stat(model, WX, stat, l); // Put back the updated stat
     }

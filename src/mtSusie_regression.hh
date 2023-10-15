@@ -21,6 +21,7 @@ struct shared_regression_t {
         , fitted_nm(num_sample, num_output)
         , residvar_m(num_output)
         , partial_nm(num_sample, num_output)
+        , residuals_nm(num_sample, num_output)
         , prior_var(levels)
         , temp_m(1, num_output)
         , temp2_m(1, num_output)
@@ -50,6 +51,7 @@ struct shared_regression_t {
     Mat fitted_nm;
     RowVec residvar_m;
     Mat partial_nm;
+    Mat residuals_nm;
     RowVec prior_var;
     RowVec temp_m;
     RowVec temp2_m;
@@ -153,6 +155,21 @@ discount_model_stat(MODEL &model,
 }
 
 template <typename MODEL, typename Derived>
+Mat
+model_residuals(MODEL &model, const Eigen::MatrixBase<Derived> &Y)
+{
+    model.residuals_nm = Y - model.fitted_nm;
+    return model.residuals_nm;
+}
+
+template <typename MODEL>
+Mat
+model_fitted(MODEL &model)
+{
+    return model.fitted_nm;
+}
+
+template <typename MODEL, typename Derived>
 void
 calibrate_residual_variance(MODEL &model,
                             const Eigen::MatrixBase<Derived> &X,
@@ -210,7 +227,9 @@ update_shared_regression(MODEL &model,
                          const Eigen::MatrixBase<Derived> &Y,
                          const bool local_residual = false,
                          const bool do_stdize_lbf = false,
-                         const bool do_update_prior = false)
+                         const bool do_update_prior = false,
+                         const bool do_hard_selection = false,
+                         const Scalar hard_lodds_cutoff = 0)
 {
     const Index L = model.lvl;
     Scalar score = 0.;
@@ -225,13 +244,15 @@ update_shared_regression(MODEL &model,
             calibrate_residual_variance(model, X, model.partial_nm);
         }
 
-        score += SER(X,                // 3. single-effect regression
-                     model.partial_nm, //   - partial prediction
-                     model.residvar_m, //   - residual variance
-                     model.get_v0(l),  //   - prior variance
-                     stat,             //   - statistics
-                     do_stdize_lbf,    //
-                     do_update_prior); //
+        score += SER(X,                  // 3. single-effect regression
+                     model.partial_nm,   //   - partial prediction
+                     model.residvar_m,   //   - residual variance
+                     model.get_v0(l),    //   - prior variance
+                     stat,               //   - statistics
+                     do_stdize_lbf,      //
+                     do_update_prior,    //
+                     do_hard_selection,  //
+                     hard_lodds_cutoff); //
 
         update_model_stat(model, X, stat, l); // Put back the updated stats
     }

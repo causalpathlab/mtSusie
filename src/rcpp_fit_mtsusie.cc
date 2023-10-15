@@ -14,6 +14,7 @@
 //' @param full_stat keep full statistics
 //' @param stdize_lbf trait-wise standardize LBF
 //' @param local_residual locally calculate residuals
+//' @param update_prior update prior variance or not
 //'
 //'
 //' @return a list of mtSusie results
@@ -57,11 +58,15 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
              Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
              const bool full_stat = true,
              const bool stdize_lbf = false,
-             const bool local_residual = false)
+             const bool local_residual = false,
+             const bool update_prior = false,
+             const bool do_hard_selection = false,
+             const double hard_lodds_cutoff = 0.)
 {
 
     shared_regression_t model(y.rows(), y.cols(), x.cols(), levels, prior_var);
     shared_effect_stat_t stat(x.cols(), y.cols());
+    set_prior_var(stat, prior_var);
 
     const Mat xx = Rcpp::as<Mat>(x), yy = Rcpp::as<Mat>(y);
 
@@ -77,12 +82,16 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
 
     for (Index iter = 0; iter < max_iter; ++iter) {
 
-        Scalar curr = update_shared_regression(model,
-                                               stat,
-                                               xx,
-                                               yy,
-                                               stdize_lbf,
-                                               local_residual);
+        Scalar curr;
+        curr = update_shared_regression(model,
+                                        stat,
+                                        xx,
+                                        yy,
+                                        stdize_lbf,
+                                        local_residual,
+                                        update_prior,
+                                        do_hard_selection,
+                                        hard_lodds_cutoff);
 
         if (iter > min_iter) {
             Scalar prev = score.at(score.size() - 1);
@@ -107,7 +116,6 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
     TLOG("Exporting model estimation results");
 
     Rcpp::List ret = mt_susie_output(model, full_stat);
-    ret["score"] = score;
 
     TLOG("Sorting credible sets");
     const Scalar _pip_cutoff = min_pip_cutoff.isNotNull() ?
@@ -116,6 +124,8 @@ fit_mt_susie(const Rcpp::NumericMatrix x,
 
     ret["cs"] = mt_susie_credible_sets(model, coverage, _pip_cutoff);
     ret["score"] = score;
+    ret["fitted"] = model_fitted(model);
+    ret["residuals"] = model_residuals(model, yy);
 
     TLOG("Done");
     return ret;

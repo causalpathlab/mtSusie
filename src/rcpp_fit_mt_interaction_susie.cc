@@ -14,6 +14,7 @@
 //' @param full_stat keep full statistics
 //' @param stdize_lbf trait-wise standardize LBF
 //' @param local_residual locally calculate residuals
+//' @param update_prior update prior variance or not
 //'
 //'
 //' @return a list of mtSusie results
@@ -59,7 +60,10 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                          const bool full_stat = true,
                          const bool stdize_lbf = false,
                          const bool local_residual = false,
-                         const bool add_marginal = true)
+                         const bool add_marginal = true,
+                         const bool update_prior = false,
+                         const bool do_hard_selection = false,
+                         const double hard_lodds_cutoff = 0.)
 {
 
     const Mat xx = Rcpp::as<Mat>(x), yy = Rcpp::as<Mat>(y);
@@ -78,6 +82,7 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                               prior_var);
 
     shared_effect_stat_t stat(xx.cols(), yy.cols());
+    set_prior_var(stat, prior_var);
 
     ASSERT_RETL(ww.rows() == xx.rows(),
                 "w and x have different numbers of rows");
@@ -110,15 +115,19 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     TLOG(K << " interaction variables, total " << L << " levels");
 
     for (Index iter = 0; iter < max_iter; ++iter) {
-        Scalar curr = update_shared_interaction_regression(model,
-                                                           stat,
-                                                           xx,
-                                                           yy,
-                                                           ww,
-                                                           interaction,
-                                                           levels_per_inter,
-                                                           stdize_lbf,
-                                                           local_residual);
+        Scalar curr;
+        curr = update_shared_interaction_regression(model,
+                                                    stat,
+                                                    xx,
+                                                    yy,
+                                                    ww,
+                                                    interaction,
+                                                    levels_per_inter,
+                                                    stdize_lbf,
+                                                    local_residual,
+                                                    update_prior,
+                                                    do_hard_selection,
+                                                    hard_lodds_cutoff);
 
         if (iter > min_iter) {
             Scalar prev = score.at(score.size() - 1);
@@ -172,6 +181,8 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
     }
     ret["cs"] = cs;
     ret["score"] = score;
+    ret["fitted"] = model_fitted(model);
+    ret["residuals"] = model_residuals(model, yy);
 
     TLOG("Done");
     return ret;

@@ -15,6 +15,7 @@
 #' @param full_stat keep full statistics
 #' @param stdize_lbf trait-wise standardize LBF
 #' @param local_residual locally calculate residuals
+#' @param update_prior update prior variance or not
 #'
 #'
 #' @return a list of mtSusie results
@@ -45,8 +46,8 @@
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index}
 #'
-fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, min_pip_cutoff = NULL, full_stat = TRUE, stdize_lbf = FALSE, local_residual = FALSE, add_marginal = TRUE) {
-    .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_inter, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, stdize_lbf, local_residual, add_marginal)
+fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, min_pip_cutoff = NULL, full_stat = TRUE, stdize_lbf = FALSE, local_residual = FALSE, add_marginal = TRUE, update_prior = FALSE, do_hard_selection = FALSE, hard_lodds_cutoff = 0.) {
+    .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_inter, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, stdize_lbf, local_residual, add_marginal, update_prior, do_hard_selection, hard_lodds_cutoff)
 }
 
 #' Estimate a multi-trait Sum of Single Effect regression model
@@ -63,6 +64,7 @@ fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 
 #' @param full_stat keep full statistics
 #' @param stdize_lbf trait-wise standardize LBF
 #' @param local_residual locally calculate residuals
+#' @param update_prior update prior variance or not
 #'
 #'
 #' @return a list of mtSusie results
@@ -92,7 +94,7 @@ fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 
 #' \item{lfsr}{local false sign rate}
 #' \item{lodds}{log-odds ratio}
 #'
-fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE, stdize_lbf = FALSE, local_residual = FALSE) {
-    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, stdize_lbf, local_residual)
+fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE, stdize_lbf = FALSE, local_residual = FALSE, update_prior = FALSE, do_hard_selection = FALSE, hard_lodds_cutoff = 0.) {
+    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, stdize_lbf, local_residual, update_prior, do_hard_selection, hard_lodds_cutoff)
 }
 

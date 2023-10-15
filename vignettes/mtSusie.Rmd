@@ -99,7 +99,8 @@ Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is 
 
 ```{r}
 library(mtSusie)
-mt.susie <- mt_susie(X, Y, L=15, prior.var = 1e-2)
+mt.susie <- mt_susie(X, Y, L=15, prior.var = 0.01, local.residual = T,
+                     hard.selection = T, hard.lodds.cutoff = 2)
 ```
 
 Which traits do we combine at each level?
@@ -134,8 +135,8 @@ Once we have identified a "union" of all the causal variants across all the trai
 
 ```{r Fig_CS_LFSR, fig.width=8, fig.height=3.5}
 .dt <- data.table::setDT(mt.susie$cs)
-.show <- unique(.dt[alpha > .05]$variants)
-.dt <- .dt[variants %in% .show & lfsr < .1]
+.show <- unique(.dt[alpha > .01]$variants)
+.dt <- .dt[variants %in% .show & lfsr < .01]
 
 ggplot(.dt, aes(x=as.factor(variants), y=as.factor(traits))) +
     facet_wrap(.~`levels`, scales="free_x", nrow=1) +

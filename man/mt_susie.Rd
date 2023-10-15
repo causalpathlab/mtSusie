@@ -19,7 +19,10 @@ mt_susie(
   prior.var = 0.01,
   output.full.stat = TRUE,
   local.residual = FALSE,
-  add.marginal = TRUE
+  update.prior = TRUE,
+  add.marginal = TRUE,
+  hard.selection = FALSE,
+  hard.lodds.cutoff = 0
 )
 }
 \arguments{
@@ -51,7 +54,13 @@ mt_susie(
 
 \item{local.residual}{calculate residual variance locally (default: TRUE)}
 
+\item{update.prior}{update prior variance (default: TRUE)}
+
 \item{add.marginal}{will add marginal levels for interaction analysis (default: TRUE)}
+
+\item{hard.selection}{trait selection by hard thresholding (default: FALSE)}
+
+\item{hard.lodds.cutoff}{(default: 0)}
 }
 \value{
 a list of mtSusie estimates
