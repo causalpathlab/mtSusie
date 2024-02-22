@@ -193,8 +193,10 @@ calibrate_post_selection_hard(STAT &stat,
             for (Index k = 0; k < m; ++k) {
                 if (stat.lodds_m(k) > lodds_cutoff) {
                     stat.lbf_p += stat.lbf_pm.col(k);
+                    stat.alpha_m(k) = 1.;
                 } else {
                     stat.lbf0_p += stat.lbf_pm.col(k);
+                    stat.alpha_m(k) = 0.;
                 }
             }
             {
@@ -345,24 +347,35 @@ SER(const Eigen::MatrixBase<Derived1> &X,
 {
     set_prior_var(stat, v0);
 
-    // 1. Update sufficient statistics
+    /////////////////////////////////////
+    // 1. Update sufficient statistics //
+    /////////////////////////////////////
+
     update_mle_stat(stat, X, Y, rV);
     calibrate_lbf(stat);
+
     if (do_stdize_lbf) {
         standardize_columns_inplace(stat.lbf_pm);
     }
 
-    // 2. Refine joint variable selection
+    ////////////////////////////////////////
+    // 2. Refine joint variable selection //
+    ////////////////////////////////////////
+
     if (do_hard_selection) {
         calibrate_post_selection_hard(stat, hard_lodds_cutoff);
     } else {
         calibrate_post_selection(stat);
     }
 
-    // 3. Calibrate posterior statistics
+    ///////////////////////////////////////
+    // 3. Calibrate posterior statistics //
+    ///////////////////////////////////////
+
     calibrate_post_stat(stat, v0);
-    if (do_calibrate_prior)
+    if (do_calibrate_prior) {
         calibrate_prior_var(stat);
+    }
 
     return calculate_posterior_loglik(stat, X, Y, rV);
     // Scalar llik = calculate_loglik(stat, Y, rV, locutoff);

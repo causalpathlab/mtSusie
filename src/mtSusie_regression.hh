@@ -18,6 +18,7 @@ struct shared_regression_t {
         , p(num_feature)
         , lvl(levels)
         , shared_pip_pl(num_feature, levels)
+        , shared_pip_lm(levels, num_output)
         , fitted_nm(num_sample, num_output)
         , residvar_m(num_output)
         , partial_nm(num_sample, num_output)
@@ -28,6 +29,7 @@ struct shared_regression_t {
         , lodds_lm(levels, num_output)
     {
         shared_pip_pl.setConstant(1. / static_cast<Scalar>(p));
+        shared_pip_lm.setZero();
         fitted_nm.setZero();
         residvar_m.setOnes();
         prior_var.setConstant(vv);
@@ -48,6 +50,7 @@ struct shared_regression_t {
     const Index n, m, p, lvl;
 
     Mat shared_pip_pl;
+    Mat shared_pip_lm;
     Mat fitted_nm;
     RowVec residvar_m;
     Mat partial_nm;
@@ -143,8 +146,10 @@ discount_model_stat(MODEL &model,
                     const Index l)
 {
     XY_safe(X,
-            (model.get_mean(l).array().colwise() *
-             model.shared_pip_pl.col(l).array())
+            ((model.get_mean(l).array().colwise() *
+              model.shared_pip_pl.col(l).array())
+                 .rowwise() *
+             model.shared_pip_lm.row(l).array())
                 .matrix(),
             model.partial_nm);
 
@@ -194,6 +199,7 @@ update_model_stat(MODEL &model,
                   const Index l)
 {
     model.shared_pip_pl.col(l) = stat.alpha_p;
+    model.shared_pip_lm.row(l) = stat.alpha_m;
     model.set_mean(l, stat.post_mean_pm);
     model.set_var(l, stat.post_var_pm);
     model.set_lbf(l, stat.lbf_pm);
@@ -204,8 +210,10 @@ update_model_stat(MODEL &model,
     model.lodds_lm.row(l) = stat.lodds_m;
 
     XY_safe(X,
-            (model.get_mean(l).array().colwise() *
-             model.shared_pip_pl.col(l).array())
+            ((model.get_mean(l).array().colwise() *
+              model.shared_pip_pl.col(l).array())
+                 .rowwise() *
+             model.shared_pip_lm.row(l).array())
                 .matrix(),
             model.partial_nm);
 

@@ -47,6 +47,11 @@ update_shared_interaction_regression(MODEL &model,
     Scalar score = 0.;
 
     for (Index l = 0; l < L; ++l) {
+
+        ///////////////////////////
+        // pick interaction term //
+        ///////////////////////////
+
         const Index k = interaction.at(l);
         if (k >= 0) {
             WX = X.array().colwise() * W.col(k).array(); // weighted by W[,k]
