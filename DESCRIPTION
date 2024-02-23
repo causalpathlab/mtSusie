@@ -1,8 +1,8 @@
 Package: mtSusie
 Type: Package
 Title: mtSusie
-Version: 0.1.1
-Date: 2023-03-25
+Version: 0.1.2
+Date: 2024-02-22
 Authors@R: person("Yongjin", "Park", role = c("aut", "cre"), email = "ypp@stat.ubc.ca")
 Maintainer: Yongjin Park <ypp@stat.ubc.ca>
 Description: mtSusie

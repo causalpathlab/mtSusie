@@ -9,7 +9,8 @@ Rcpp::List
 mt_susie_output(const MODEL &model, bool full_stat)
 {
     if (full_stat) {
-        return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
+        return Rcpp::List::create(Rcpp::_["alpha.p"] = model.shared_pip_pl,
+                                  Rcpp::_["alpha.m"] = model.shared_pip_lm,
                                   Rcpp::_["resid.var"] = model.residvar_m,
                                   Rcpp::_["prior.var"] = model.prior_var,
                                   Rcpp::_["log.odds"] = model.lodds_lm,
@@ -22,7 +23,8 @@ mt_susie_output(const MODEL &model, bool full_stat)
                                   Rcpp::_["p"] = model.p,
                                   Rcpp::_["L"] = model.lvl);
     } else {
-        return Rcpp::List::create(Rcpp::_["alpha"] = model.shared_pip_pl,
+        return Rcpp::List::create(Rcpp::_["alpha.p"] = model.shared_pip_pl,
+                                  Rcpp::_["alpha.m"] = model.shared_pip_lm,
                                   Rcpp::_["resid.var"] = model.residvar_m,
                                   Rcpp::_["prior.var"] = model.prior_var,
                                   Rcpp::_["log.odds"] = model.lodds_lm,
@@ -76,6 +78,8 @@ mt_susie_credible_sets(MODEL &model,
         // Mat error = mean.binaryExpr(var, error_p);
         Vec lfsr = -mean.binaryExpr(var, error_p).transpose() *
             model.shared_pip_pl.col(l);
+
+        lfsr.array() *= model.shared_pip_lm.row(l).transpose().array();
         lfsr.array() += 1;
 
         //////////////////////////
@@ -90,10 +94,11 @@ mt_susie_credible_sets(MODEL &model,
             if (alpha.at(j) < pip_cutoff)
                 break;
             for (Index t = 0; t < model.m; ++t) {
+                const Scalar a_t = model.shared_pip_lm(l, t);
                 variants.emplace_back(j + 1); // 1-based
                 traits.emplace_back(t + 1);   // 1-based
                 levels.emplace_back(l + 1);   // 1-based
-                alpha_list.emplace_back(alpha.at(j));
+                alpha_list.emplace_back(alpha.at(j) * a_t);
                 mean_list.emplace_back(mean(j, t));
                 sd_list.emplace_back(std::sqrt(var(j, t)));
                 lbf_list.emplace_back(lbf(j, t));

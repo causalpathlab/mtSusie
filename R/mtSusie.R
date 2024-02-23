@@ -44,6 +44,10 @@
 #' \item{lfsr}{local false sign rate}
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index (if W!=NULL)}
+#'
+#'
+#' @import Rcpp
+#' @import RcppEigen
 #' 
 #' @export
 #' 

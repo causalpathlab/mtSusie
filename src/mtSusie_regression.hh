@@ -248,6 +248,8 @@ update_shared_regression(MODEL &model,
         discount_model_stat(model, X, Y, l);
 
         // 2. calibrate residual variance locally...
+        // This is actually dangerous...
+        // prone to overfitting
         if (local_residual) {
             calibrate_residual_variance(model, X, model.partial_nm);
         }

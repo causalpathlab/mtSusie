@@ -99,7 +99,7 @@ Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is 
 
 ```{r}
 library(mtSusie)
-mt.susie <- mt_susie(X, Y, L=15, prior.var = 0.01, local.residual = T)
+mt.susie <- mt_susie(X, Y, L=15, prior.var = 0.01, local.residual = F)
 ```
 
 Which traits do we combine at each level?
@@ -113,7 +113,7 @@ ggplot(.dt, aes(Var1, Var2, fill=value)) +
 ```
 
 ```{r Fig_PIP_mtSusie, fig.width=8, fig.height=5}
-.dt <- reshape2::melt(mt.susie$alpha) %>%
+.dt <- reshape2::melt(mt.susie$alpha.p) %>%
     filter(Var2 <= 10) %>%
     mutate(lvl = sprintf("L%02d", `Var2`))
 
