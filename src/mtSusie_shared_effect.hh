@@ -117,6 +117,8 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
     const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
     stat.alpha0_p.setConstant(p0);
 
+    stat.lbf_pm.array().rowwise() -= stat.lbf_pm.colwise().maxCoeff().array();
+
     // a. Initialization of shared PIP
     {
         stat.lbf_p = stat.lbf_pm.rowwise().sum();
@@ -136,6 +138,9 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
         // b. Select traits (probabilistically)
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
         stat.alpha_m = stat.lodds_m.unaryExpr(stat.sigmoid_op);
+
+        Scalar n1 = stat.alpha_m.sum();
+        Scalar n0 = stat.m - n1;
 
         // c. Take weighted average for each variant
         stat.lbf_p = stat.lbf_pm * stat.alpha_m.transpose();

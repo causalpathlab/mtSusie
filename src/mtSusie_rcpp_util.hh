@@ -44,7 +44,8 @@ template <typename MODEL>
 Rcpp::List
 mt_susie_credible_sets(MODEL &model,
                        const Scalar coverage,
-                       const Scalar pip_cutoff)
+                       const Scalar pip_cutoff,
+                       const Scalar v0 = 1e-8)
 {
     using svec = std::vector<Scalar>;
     using ivec = std::vector<Index>;
@@ -54,12 +55,11 @@ mt_susie_credible_sets(MODEL &model,
 
     const Index p = model.p, m = model.m;
 
-    auto error_p = [](Scalar m, Scalar v) {
-        Scalar pr = R::pnorm(0, m, std::sqrt(v), true, false);
-        if (pr < .5)
-            pr = 1. - pr;
-        return pr;
-    };
+    //////////////////////////////////////
+    // Calibrate local false sign rates //
+    //////////////////////////////////////
+
+    calibrate_lfsr(model, v0);
 
     for (Index l = 0; l < model.lvl; ++l) {
         std::vector<Scalar> alpha = std_vector(model.shared_pip_pl.col(l));
@@ -70,17 +70,7 @@ mt_susie_credible_sets(MODEL &model,
         Mat &lbf = model.get_lbf(l);
         Mat &zz = model.get_z(l);
         Mat &lodds = model.lodds_lm;
-
-        //////////////////////////////////////
-        // Calibrate local false sign rates //
-        //////////////////////////////////////
-
-        // Mat error = mean.binaryExpr(var, error_p);
-        Vec lfsr = -mean.binaryExpr(var, error_p).transpose() *
-            model.shared_pip_pl.col(l);
-
-        lfsr.array() *= model.shared_pip_lm.row(l).transpose().array();
-        lfsr.array() += 1;
+        Mat &lfsr = model.lfsr_lm;
 
         //////////////////////////
         // Expand credible sets //
@@ -103,7 +93,7 @@ mt_susie_credible_sets(MODEL &model,
                 sd_list.emplace_back(std::sqrt(var(j, t)));
                 lbf_list.emplace_back(lbf(j, t));
                 z_list.emplace_back(zz(j, t));
-                lfsr_list.emplace_back(lfsr(t));
+                lfsr_list.emplace_back(lfsr(l, t));
                 lodds_list.emplace_back(lodds(l, t));
             }
             if (cum > coverage)
@@ -111,9 +101,9 @@ mt_susie_credible_sets(MODEL &model,
         }
     }
 
-    return Rcpp::List::create(Rcpp::_["variants"] = variants,
-                              Rcpp::_["traits"] = traits,
-                              Rcpp::_["levels"] = levels,
+    return Rcpp::List::create(Rcpp::_["variant"] = variants,
+                              Rcpp::_["trait"] = traits,
+                              Rcpp::_["level"] = levels,
                               Rcpp::_["alpha"] = alpha_list,
                               Rcpp::_["mean"] = mean_list,
                               Rcpp::_["sd"] = sd_list,

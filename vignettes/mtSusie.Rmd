@@ -99,17 +99,18 @@ Here comes our `mtSusie` (multi-trait Sum of Single Effects) model. The idea is 
 
 ```{r}
 library(mtSusie)
-mt.susie <- mt_susie(X, Y, L=15, prior.var = 0.01, local.residual = F)
+mt.susie <- mt_susie(X, Y, L=15, prior.var = 0.2)
 ```
 
 Which traits do we combine at each level?
 
 ```{r Fig_level_trait, fig.width=8, fig.height=3}
-.dt <- reshape2::melt(mt.susie$log.odds)
+prior <- log(.1)-log(.9)
+.dt <- reshape2::melt(1/(1+exp(-mt.susie$log.odds - prior)))
 ggplot(.dt, aes(Var1, Var2, fill=value)) +
     geom_tile(colour="gray20", linewidth=.1) +
     xlab("levels") + ylab("traits") +
-    scale_fill_distiller(direction=1)
+    scale_fill_distiller("selection P", direction=1)
 ```
 
 ```{r Fig_PIP_mtSusie, fig.width=8, fig.height=5}
@@ -134,13 +135,14 @@ Once we have identified a "union" of all the causal variants across all the trai
 
 ```{r Fig_CS_LFSR, fig.width=8, fig.height=3.5}
 .dt <- data.table::setDT(mt.susie$cs)
-.show <- unique(.dt[alpha > .01]$variants)
-.dt <- .dt[variants %in% .show & lfsr < .01]
+.dt[, pip := 1 - prod(1 - `alpha`), by = .(variant, trait)]
+.show <- unique(.dt[alpha > .5]$variant)
+.dt <- .dt[variant %in% .show]
 
-ggplot(.dt, aes(x=as.factor(variants), y=as.factor(traits))) +
-    facet_wrap(.~`levels`, scales="free_x", nrow=1) +
+ggplot(.dt, aes(x=as.factor(variant), y=as.factor(trait))) +
+    facet_wrap(.~`level`, scales="free_x", nrow=1) +
     xlab("variant") + ylab("trait") +
-    geom_point(aes(fill=`z`, size=-log10(pmax(`lfsr`,1e-3))), pch=22) +
+    geom_point(aes(fill=`pip`, size=-log10(pmax(`lfsr`,1e-3))), pch=22) +
     scale_size_continuous(range = c(0,5), "LFSR", labels=function(x) round(10^(-x), 3)) +
-    scale_fill_gradient2("z-score", mid="white", high="red", low="blue")
+    scale_fill_distiller("PIP", direction=1)
 ```

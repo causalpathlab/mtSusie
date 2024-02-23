@@ -27,12 +27,14 @@ struct shared_regression_t {
         , temp_m(1, num_output)
         , temp2_m(1, num_output)
         , lodds_lm(levels, num_output)
+        , lfsr_lm(levels, num_output)
     {
         shared_pip_pl.setConstant(1. / static_cast<Scalar>(p));
         shared_pip_lm.setZero();
         fitted_nm.setZero();
         residvar_m.setOnes();
         prior_var.setConstant(vv);
+        lfsr_lm.setOnes();
 
         fill_mat_vec(mu_pm_list, lvl, p, m);
         fill_mat_vec(var_pm_list, lvl, p, m);
@@ -59,6 +61,7 @@ struct shared_regression_t {
     RowVec temp_m;
     RowVec temp2_m;
     Mat lodds_lm;
+    Mat lfsr_lm;
 
     mat_vec_t mu_pm_list;
     mat_vec_t var_pm_list;
@@ -100,6 +103,18 @@ struct shared_regression_t {
 #endif
         return prior_var(l);
     }
+
+    struct max_pnorm_op_t {
+        explicit max_pnorm_op_t() { }
+        Scalar operator()(const Scalar &m, const Scalar &v) const
+        {
+            Scalar pr = R::pnorm(0, m, std::sqrt(v), true, false);
+            if (pr < .5) {
+                pr = 1. - pr;
+            }
+            return pr;
+        }
+    } max_pnorm_op;
 
 private:
     inline Mat &_get(mat_vec_t &vec, Index l)
@@ -189,6 +204,27 @@ calibrate_residual_variance(MODEL &model,
 
     // Exact calculation of X^2 * V[theta] easily blow up!!
     model.residvar_m /= nn;
+}
+
+//' Calculate LFSR
+template <typename MODEL>
+void
+calibrate_lfsr(MODEL &model, const Scalar v0 = 1e-16)
+{
+    for (Index l = 0; l < model.lvl; ++l) {
+        // 1 - sum_j alpha_j * max(N(beta_j > 0), N(beta_j < 0))
+        model.lfsr_lm.row(l) =
+            (model.get_mean(l)
+                 .binaryExpr((model.get_var(l).array() + v0).matrix(),
+                             model.max_pnorm_op))
+                .transpose() *
+            model.shared_pip_pl.col(l);
+
+        model.lfsr_lm.row(l).array() *=
+            -1.0 * model.shared_pip_lm.row(l).array();
+
+        model.lfsr_lm.row(l).array() += 1.;
+    }
 }
 
 template <typename MODEL, typename Derived, typename STAT>
