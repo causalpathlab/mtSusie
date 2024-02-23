@@ -98,15 +98,20 @@ set_prior_var(STAT &stat, const Scalar v0)
 
 template <typename STAT>
 void
-calibrate_prior_var(STAT &stat, const Scalar max_var = 10000.)
+calibrate_prior_var(STAT &stat,
+                    const Scalar max_var = 10000.,
+                    const Scalar update_rate = .1)
 {
-    stat.v0 = sum_safe(
+    const Scalar new_v0 = sum_safe(
         (stat.post_mean_pm.cwiseProduct(stat.post_mean_pm) + stat.post_var_pm)
             .transpose() *
         stat.alpha_p);
 
-    if (stat.v0 > max_var)
+    stat.v0 = stat.v0 * (1. - update_rate) + new_v0 * update_rate;
+
+    if (stat.v0 > max_var) {
         stat.v0 = max_var;
+    }
 }
 
 template <typename STAT>

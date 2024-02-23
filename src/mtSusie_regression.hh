@@ -193,17 +193,24 @@ template <typename MODEL, typename Derived>
 void
 calibrate_residual_variance(MODEL &model,
                             const Eigen::MatrixBase<Derived> &X,
-                            const Eigen::MatrixBase<Derived> &Y)
+                            const Eigen::MatrixBase<Derived> &Y,
+                            const Scalar update_rate = .1)
 {
-
     // Expected R2 value for each output
     // (Y - X * E[theta])^2
     const Scalar nn = X.rows();
     colsum_safe((Y - model.fitted_nm).cwiseProduct(Y - model.fitted_nm),
-                model.residvar_m);
+                model.temp_m);
 
     // Exact calculation of X^2 * V[theta] easily blow up!!
-    model.residvar_m /= nn;
+    model.temp_m /= nn;
+
+    //////////////////////
+    // update gradually //
+    //////////////////////
+
+    model.residvar_m *= (1. - update_rate);
+    model.residvar_m += model.temp_m * update_rate;
 }
 
 //' Calculate LFSR
