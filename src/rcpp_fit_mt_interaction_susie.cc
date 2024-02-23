@@ -34,9 +34,9 @@
 //' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 //'
 //' In the `cs`, we have
-//' \item{variants}{variant indexes `[1 .. p]`}
-//' \item{traits}{trait indexes `[1 .. m]`}
-//' \item{levels}{levels `[1 .. L]`}
+//' \item{variant}{variant indexes `[1 .. p]`}
+//' \item{trait}{trait indexes `[1 .. m]`}
+//' \item{level}{levels `[1 .. L]`}
 //' \item{alpha}{shared PIP}
 //' \item{mean}{univariate mean}
 //' \item{var}{univariate var}
@@ -170,7 +170,7 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
 
     Rcpp::List cs = mt_susie_credible_sets(model, coverage, _pip_cutoff);
     {
-        auto level_vec = Rcpp::as<ivec>(cs["levels"]);
+        auto level_vec = Rcpp::as<ivec>(cs["level"]);
         ivec inter_out;
         inter_out.reserve(level_vec.size());            //
         for (int l : level_vec) {                       //

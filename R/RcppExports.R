@@ -35,9 +35,9 @@
 #' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 #'
 #' In the `cs`, we have
-#' \item{variants}{variant indexes `[1 .. p]`}
-#' \item{traits}{trait indexes `[1 .. m]`}
-#' \item{levels}{levels `[1 .. L]`}
+#' \item{variant}{variant indexes `[1 .. p]`}
+#' \item{trait}{trait indexes `[1 .. m]`}
+#' \item{level}{levels `[1 .. L]`}
 #' \item{alpha}{shared PIP}
 #' \item{mean}{univariate mean}
 #' \item{var}{univariate var}
@@ -84,9 +84,9 @@ fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 
 #' \item{cs}{credible sets (use `data.table::setDT` to assemble)}
 #'
 #' In the `cs`, we have
-#' \item{variants}{variant indexes `[1 .. p]`}
-#' \item{traits}{trait indexes `[1 .. m]`}
-#' \item{levels}{levels `[1 .. L]`}
+#' \item{variant}{variant indexes `[1 .. p]`}
+#' \item{trait}{trait indexes `[1 .. m]`}
+#' \item{level}{levels `[1 .. L]`}
 #' \item{alpha}{shared PIP}
 #' \item{mean}{univariate mean}
 #' \item{var}{univariate var}

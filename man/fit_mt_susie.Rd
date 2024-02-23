@@ -68,9 +68,9 @@ a list of mtSusie results
 \item{cs}{credible sets (use \code{data.table::setDT} to assemble)}
 
 In the \code{cs}, we have
-\item{variants}{variant indexes \verb{[1 .. p]}}
-\item{traits}{trait indexes \verb{[1 .. m]}}
-\item{levels}{levels \verb{[1 .. L]}}
+\item{variant}{variant indexes \verb{[1 .. p]}}
+\item{trait}{trait indexes \verb{[1 .. m]}}
+\item{level}{levels \verb{[1 .. L]}}
 \item{alpha}{shared PIP}
 \item{mean}{univariate mean}
 \item{var}{univariate var}
