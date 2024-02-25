@@ -15,6 +15,7 @@
 #' @param prior_var        prior variance
 #' @param min_pip_cutoff   minimum PIP cutoff in building credible sets
 #' @param full_stat        keep full statistics
+#' @param local_residual   locally calculate residuals
 #' @param update_prior     update prior variance or not
 #'
 #'
@@ -46,8 +47,8 @@
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index}
 #'
-fit_mt_interaction_susie <- function(x, y, w, levels_per_wx = 3L, levels_per_w = 1L, levels_per_x = 1L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, min_pip_cutoff = NULL, full_stat = TRUE, update_prior = FALSE, do_hard_selection = FALSE, hard_lodds_cutoff = 0.) {
-    .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_wx, levels_per_w, levels_per_x, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, update_prior, do_hard_selection, hard_lodds_cutoff)
+fit_mt_interaction_susie <- function(x, y, w, levels_per_wx = 5L, levels_per_w = 1L, levels_per_x = 1L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, min_pip_cutoff = NULL, full_stat = TRUE, local_residual = FALSE, update_prior = FALSE) {
+    .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_wx, levels_per_w, levels_per_x, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, local_residual, update_prior)
 }
 
 #' Estimate a multi-trait Sum of Single Effect regression model
@@ -62,7 +63,6 @@ fit_mt_interaction_susie <- function(x, y, w, levels_per_wx = 3L, levels_per_w =
 #' @param lodds_cutoff log-odds cutoff in trait selection steps
 #' @param min_pip_cutoff minimum PIP cutoff in building credible sets
 #' @param full_stat keep full statistics
-#' @param stdize_lbf trait-wise standardize LBF
 #' @param local_residual locally calculate residuals
 #' @param update_prior update prior variance or not
 #'
@@ -94,7 +94,7 @@ fit_mt_interaction_susie <- function(x, y, w, levels_per_wx = 3L, levels_per_w =
 #' \item{lfsr}{local false sign rate}
 #' \item{lodds}{log-odds ratio}
 #'
-fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE, stdize_lbf = FALSE, local_residual = FALSE, update_prior = FALSE, do_hard_selection = FALSE, hard_lodds_cutoff = 0.) {
-    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, stdize_lbf, local_residual, update_prior, do_hard_selection, hard_lodds_cutoff)
+fit_mt_susie <- function(x, y, levels = 15L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, lodds_cutoff = 0, min_pip_cutoff = NULL, full_stat = TRUE, local_residual = FALSE, update_prior = FALSE) {
+    .Call('_mtSusie_fit_mt_susie', PACKAGE = 'mtSusie', x, y, levels, max_iter, min_iter, coverage, tol, prior_var, lodds_cutoff, min_pip_cutoff, full_stat, local_residual, update_prior)
 }
 

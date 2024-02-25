@@ -8,7 +8,7 @@ fit_mt_interaction_susie(
   x,
   y,
   w,
-  levels_per_wx = 3L,
+  levels_per_wx = 5L,
   levels_per_w = 1L,
   levels_per_x = 1L,
   max_iter = 100L,
@@ -18,9 +18,7 @@ fit_mt_interaction_susie(
   prior_var = 0.1,
   min_pip_cutoff = NULL,
   full_stat = TRUE,
-  update_prior = FALSE,
-  do_hard_selection = FALSE,
-  hard_lodds_cutoff = 0
+  update_prior = FALSE
 )
 }
 \arguments{

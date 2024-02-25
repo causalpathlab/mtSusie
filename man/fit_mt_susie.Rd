@@ -16,11 +16,8 @@ fit_mt_susie(
   lodds_cutoff = 0,
   min_pip_cutoff = NULL,
   full_stat = TRUE,
-  stdize_lbf = FALSE,
   local_residual = FALSE,
-  update_prior = FALSE,
-  do_hard_selection = FALSE,
-  hard_lodds_cutoff = 0
+  update_prior = FALSE
 )
 }
 \arguments{
@@ -43,8 +40,6 @@ fit_mt_susie(
 \item{min_pip_cutoff}{minimum PIP cutoff in building credible sets}
 
 \item{full_stat}{keep full statistics}
-
-\item{stdize_lbf}{trait-wise standardize LBF}
 
 \item{local_residual}{locally calculate residuals}
 

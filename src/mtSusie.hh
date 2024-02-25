@@ -52,6 +52,5 @@ using IntVec = typename Eigen::Matrix<std::ptrdiff_t, Eigen::Dynamic, 1>;
 #include "mtSusie_rcpp_util.hh"
 #include "mtSusie_shared_effect.hh"
 #include "mtSusie_regression.hh"
-#include "mtSusie_interaction_regression.hh"
 
 #endif

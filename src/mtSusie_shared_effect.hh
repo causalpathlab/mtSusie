@@ -355,7 +355,6 @@ SER(const Eigen::MatrixBase<Derived1> &X,
     const Eigen::MatrixBase<Derived3> &rV,
     const Scalar v0,
     STAT &stat,
-    const bool do_stdize_lbf = false,
     const bool do_calibrate_prior = false,
     const bool do_hard_selection = false,
     const Scalar hard_lodds_cutoff = 0)
@@ -368,10 +367,6 @@ SER(const Eigen::MatrixBase<Derived1> &X,
 
     update_mle_stat(stat, X, Y, rV);
     calibrate_lbf(stat);
-
-    if (do_stdize_lbf) {
-        standardize_columns_inplace(stat.lbf_pm);
-    }
 
     ////////////////////////////////////////
     // 2. Refine joint variable selection //

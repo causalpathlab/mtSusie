@@ -276,7 +276,6 @@ update_shared_regression(MODEL &model,
                          const Eigen::MatrixBase<Derived> &X,
                          const Eigen::MatrixBase<Derived> &Y,
                          const bool local_residual = false,
-                         const bool do_stdize_lbf = false,
                          const bool do_update_prior = false,
                          const bool do_hard_selection = false,
                          const Scalar hard_lodds_cutoff = 0)
@@ -301,7 +300,6 @@ update_shared_regression(MODEL &model,
                      model.residvar_m,   //   - residual variance
                      model.get_v0(l),    //   - prior variance
                      stat,               //   - statistics
-                     do_stdize_lbf,      //
                      do_update_prior,    //
                      do_hard_selection,  //
                      hard_lodds_cutoff); //

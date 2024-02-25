@@ -8,21 +8,15 @@ mt_susie(
   X,
   Y,
   L = 5,
-  W = NULL,
-  clamp = NULL,
   max.iter = 100,
   min.iter = 5,
   tol = 1e-08,
   coverage = 0.9,
   min.pip.cutoff = NULL,
-  stdize.lbf = FALSE,
   prior.var = 0.01,
-  output.full.stat = TRUE,
+  output.full.stat = FALSE,
   local.residual = FALSE,
-  update.prior = TRUE,
-  add.marginal = TRUE,
-  hard.selection = FALSE,
-  hard.lodds.cutoff = 0
+  update.prior = TRUE
 )
 }
 \arguments{
@@ -31,10 +25,6 @@ mt_susie(
 \item{Y}{n x m output matrix}
 
 \item{L}{levels or expected num of independent factors (default: 5)}
-
-\item{W}{n x k interaction terms matrix (default: NULL)}
-
-\item{clamp}{handle outliers by winsorization (default: NULL)}
 
 \item{max.iter}{maximum iterations (default: 100)}
 
@@ -46,21 +36,13 @@ mt_susie(
 
 \item{min.pip.cutoff}{min PIP to report (default: 1/p)}
 
-\item{stdize.lbf}{trait-wise standardize LBF}
-
 \item{prior.var}{prior level variance (default: 1e-2)}
 
-\item{output.full.stat}{output every bit of the results (default: TRUE)}
+\item{output.full.stat}{output every bit of the results (default: FALSE)}
 
-\item{local.residual}{calculate residual variance locally (default: TRUE)}
+\item{local.residual}{calculate residual variance locally (default: FALSE)}
 
 \item{update.prior}{update prior variance (default: TRUE)}
-
-\item{add.marginal}{will add marginal levels for interaction analysis (default: TRUE)}
-
-\item{hard.selection}{trait selection by hard thresholding (default: FALSE)}
-
-\item{hard.lodds.cutoff}{(default: 0)}
 }
 \value{
 a list of mtSusie estimates
@@ -81,16 +63,15 @@ a list of mtSusie estimates
 \item{cs}{credible sets (use \code{data.table::setDT} to assemble)}
 
 In the \code{cs}, we have
-\item{variants}{variant indexes \verb{[1 .. p]}}
-\item{traits}{trait indexes \verb{[1 .. m]}}
-\item{levels}{levels \verb{[1 .. L]}}
+\item{variant}{variant indexes \verb{[1 .. p]}}
+\item{trait}{trait indexes \verb{[1 .. m]}}
+\item{level}{levels \verb{[1 .. L]}}
 \item{alpha}{shared PIP}
 \item{mean}{univariate mean}
 \item{var}{univariate var}
 \item{z}{univariate z-score}
 \item{lfsr}{local false sign rate}
 \item{lodds}{log-odds ratio}
-\item{interaction}{interacting column index (if W!=NULL)}
 }
 \description{
 Fit multi-trait SuSiE across several regression models

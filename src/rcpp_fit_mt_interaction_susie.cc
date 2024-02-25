@@ -14,6 +14,7 @@
 //' @param prior_var        prior variance
 //' @param min_pip_cutoff   minimum PIP cutoff in building credible sets
 //' @param full_stat        keep full statistics
+//' @param local_residual   locally calculate residuals
 //' @param update_prior     update prior variance or not
 //'
 //'
@@ -50,7 +51,7 @@ Rcpp::List
 fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                          const Rcpp::NumericMatrix y,
                          const Rcpp::NumericMatrix w,
-                         const std::size_t levels_per_wx = 3,
+                         const std::size_t levels_per_wx = 5,
                          const std::size_t levels_per_w = 1,
                          const std::size_t levels_per_x = 1,
                          const std::size_t max_iter = 100,
@@ -60,9 +61,8 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                          const double prior_var = 0.1,
                          Rcpp::Nullable<double> min_pip_cutoff = R_NilValue,
                          const bool full_stat = true,
-                         const bool update_prior = false,
-                         const bool do_hard_selection = false,
-                         const double hard_lodds_cutoff = 0.)
+                         const bool local_residual = false,
+                         const bool update_prior = false)
 {
 
     const Mat xx = Rcpp::as<Mat>(x), yy = Rcpp::as<Mat>(y);
@@ -135,10 +135,10 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                              stat_w,             //   - statistics
                              update_prior);      //
                                                  //
-                update_model_stat(model_w, // c. Put back the updated stats
-                                  ww,      // design matrix
-                                  stat_w,  // new stat
-                                  l);      // level l
+                update_model_stat(model_w,       // c. Put back the new stats
+                                  ww,            // design matrix
+                                  stat_w,        // new stat
+                                  l);            // level l
             }
 
             calibrate_residual_variance(model_w, Y);
@@ -163,10 +163,10 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
                              stat_x,             //   - statistics
                              update_prior);      //
                                                  //
-                update_model_stat(model_x, // c. Put back the updated stats
-                                  xx,      // design matrix
-                                  stat_x,  // new stat
-                                  l);      // level l
+                update_model_stat(model_x,       // c. Put back the new stats
+                                  xx,            // design matrix
+                                  stat_x,        // new stat
+                                  l);            // level l
             }
             calibrate_residual_variance(model_x, Y);
         } // end of Y ~ X
@@ -236,14 +236,27 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
         (1. / static_cast<Scalar>(xx.cols()));
 
     std::vector<int> inter_names;
-    for (Index l = 0; l < levels_per_wx; ++l) {
-        for (Index k = 0; k < ww.cols(); ++k) {
-            inter_names.emplace_back(k + 1);
+    {
+        for (Index l = 0; l < levels_per_wx; ++l) {
+            for (Index k = 0; k < ww.cols(); ++k) {
+                inter_names.emplace_back(k + 1);
+            }
         }
+        ret["interaction"] = inter_names;
     }
-    ret["interaction"] = inter_names;
 
     Rcpp::List cs = mt_susie_credible_sets(model_wx, coverage, _pip_cutoff);
+    {
+        auto level_vec = Rcpp::as<std::vector<int>>(cs["level"]);
+        std::vector<int> _out;
+        _out.reserve(level_vec.size());
+        for (int l : level_vec) {
+            const int j = l - 1; // zero-baased
+            _out.emplace_back(inter_names.at(j));
+        }
+        cs["interaction"] = _out;
+    }
+
     ret["cs"] = cs;
     ret["score"] = score_vec;
     ret["fitted"] = model_fitted(model_wx);

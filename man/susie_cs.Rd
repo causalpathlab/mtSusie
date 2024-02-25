@@ -15,7 +15,7 @@ susie_cs(
   coverage = 0.9,
   min.pip.cutoff = NULL,
   prior.var = 0.01,
-  output.full.stat = TRUE,
+  output.full.stat = FALSE,
   local.residual = FALSE,
   update.prior = TRUE
 )
@@ -41,9 +41,9 @@ susie_cs(
 
 \item{prior.var}{prior level variance (default: 1e-2)}
 
-\item{output.full.stat}{output every bit of the results (default: TRUE)}
+\item{output.full.stat}{output every bit of the results (default: FALSE)}
 
-\item{local.residual}{calculate residual variance locally (default: TRUE)}
+\item{local.residual}{calculate residual variance locally (default: FALSE)}
 
 \item{update.prior}{update prior variance (default: TRUE)}
 }
