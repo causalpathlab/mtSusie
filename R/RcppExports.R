@@ -3,19 +3,19 @@
 
 #' Estimate mtSusie regression model with an interaction matrix
 #'
-#' @param x          design matrix
-#' @param y          output matrix
-#' @param w          interaction matrix
-#' @param levels     number of "single" effects
-#' @param max_iter   maximum iterations
-#' @param min_iter   minimum iterations
-#' @param tol        tolerance
-#' @param prior_var  prior variance
-#' @param min_pip_cutoff minimum PIP cutoff in building credible sets
-#' @param full_stat keep full statistics
-#' @param stdize_lbf trait-wise standardize LBF
-#' @param local_residual locally calculate residuals
-#' @param update_prior update prior variance or not
+#' @param x                design matrix
+#' @param y                output matrix
+#' @param w                interaction matrix
+#' @param levels_per_wx    number of "single" effects for w*x terms
+#' @param levels_per_w     number of "single" effects for w terms
+#' @param levels_per_x     number of "single" effects for x terms
+#' @param max_iter         maximum iterations
+#' @param min_iter         minimum iterations
+#' @param tol              tolerance
+#' @param prior_var        prior variance
+#' @param min_pip_cutoff   minimum PIP cutoff in building credible sets
+#' @param full_stat        keep full statistics
+#' @param update_prior     update prior variance or not
 #'
 #'
 #' @return a list of mtSusie results
@@ -46,8 +46,8 @@
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index}
 #'
-fit_mt_interaction_susie <- function(x, y, w, levels_per_inter = 3L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, min_pip_cutoff = NULL, full_stat = TRUE, stdize_lbf = FALSE, local_residual = FALSE, add_marginal = TRUE, update_prior = FALSE, do_hard_selection = FALSE, hard_lodds_cutoff = 0.) {
-    .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_inter, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, stdize_lbf, local_residual, add_marginal, update_prior, do_hard_selection, hard_lodds_cutoff)
+fit_mt_interaction_susie <- function(x, y, w, levels_per_wx = 3L, levels_per_w = 1L, levels_per_x = 1L, max_iter = 100L, min_iter = 1L, coverage = .9, tol = 1e-4, prior_var = 0.1, min_pip_cutoff = NULL, full_stat = TRUE, update_prior = FALSE, do_hard_selection = FALSE, hard_lodds_cutoff = 0.) {
+    .Call('_mtSusie_fit_mt_interaction_susie', PACKAGE = 'mtSusie', x, y, w, levels_per_wx, levels_per_w, levels_per_x, max_iter, min_iter, coverage, tol, prior_var, min_pip_cutoff, full_stat, update_prior, do_hard_selection, hard_lodds_cutoff)
 }
 
 #' Estimate a multi-trait Sum of Single Effect regression model

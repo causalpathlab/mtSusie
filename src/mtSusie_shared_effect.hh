@@ -122,14 +122,14 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
     const Scalar p0 = 1. / static_cast<Scalar>(stat.p);
     stat.alpha0_p.setConstant(p0);
 
-    stat.lbf_pm.array().rowwise() -= stat.lbf_pm.colwise().maxCoeff().array();
+    // This might be okay... but could undermine strong effects
+    // stat.lbf_pm.array().rowwise() -=
+    // stat.lbf_pm.colwise().maxCoeff().array();
 
     // a. Initialization of shared PIP
     {
         stat.lbf_p = stat.lbf_pm.rowwise().sum();
-        Scalar maxlbf = stat.lbf_p.maxCoeff();
-        stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
-        stat.alpha_p /= stat.alpha_p.sum();
+        softmax_safe(stat.lbf_p, stat.alpha_p);
     }
 
     if (stat.m == 1) { // single output
@@ -144,8 +144,8 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
         stat.lodds_m = (stat.alpha_p - stat.alpha0_p).transpose() * stat.lbf_pm;
         stat.alpha_m = stat.lodds_m.unaryExpr(stat.sigmoid_op);
 
-        Scalar n1 = stat.alpha_m.sum();
-        Scalar n0 = stat.m - n1;
+        // Scalar n1 = stat.alpha_m.sum();
+        // Scalar n0 = stat.m - n1;
 
         // c. Take weighted average for each variant
         stat.lbf_p = stat.lbf_pm * stat.alpha_m.transpose();
@@ -156,17 +156,19 @@ calibrate_post_selection(STAT &stat, const Index inner_iter = 20)
                 .rowwise()
                 .sum();
 
-        {
-            const Scalar maxlbf = stat.lbf_p.maxCoeff();
-            stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
-            stat.alpha_p /= stat.alpha_p.sum();
-        }
+        softmax_safe(stat.lbf_p, stat.alpha_p);
+        softmax_safe(stat.lbf0_p, stat.alpha0_p);
+        // {
+        //     const Scalar maxlbf = stat.lbf_p.maxCoeff();
+        //     stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+        //     stat.alpha_p /= stat.alpha_p.sum();
+        // }
 
-        {
-            const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
-            stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
-            stat.alpha0_p /= stat.alpha0_p.sum();
-        }
+        // {
+        //     const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
+        //     stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
+        //     stat.alpha0_p /= stat.alpha0_p.sum();
+        // }
     }
 }
 
@@ -209,17 +211,20 @@ calibrate_post_selection_hard(STAT &stat,
                     stat.alpha_m(k) = 0.;
                 }
             }
-            {
-                const Scalar maxlbf = stat.lbf_p.maxCoeff();
-                stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
-                stat.alpha_p /= stat.alpha_p.sum();
-            }
 
-            {
-                const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
-                stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
-                stat.alpha0_p /= stat.alpha0_p.sum();
-            }
+            softmax_safe(stat.lbf_p, stat.alpha_p);
+            softmax_safe(stat.lbf0_p, stat.alpha0_p);
+            // {
+            //     const Scalar maxlbf = stat.lbf_p.maxCoeff();
+            //     stat.alpha_p = (stat.lbf_p.array() - maxlbf).exp();
+            //     stat.alpha_p /= stat.alpha_p.sum();
+            // }
+
+            // {
+            //     const Scalar maxlbf0 = stat.lbf0_p.maxCoeff();
+            //     stat.alpha0_p = (stat.lbf0_p.array() - maxlbf0).exp();
+            //     stat.alpha0_p /= stat.alpha0_p.sum();
+            // }
             nretain_old = nretain;
         } else {
             break;

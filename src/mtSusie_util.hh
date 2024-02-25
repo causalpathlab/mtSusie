@@ -44,4 +44,13 @@ XtY_safe(const Eigen::MatrixBase<T1> &X,
     XY_safe(X.transpose(), Y, ret);
 }
 
+template <typename T>
+void
+softmax_safe(const Eigen::MatrixBase<T> &logits, Eigen::MatrixBase<T> &prob)
+{
+    const Scalar maxlogits = logits.maxCoeff();
+    prob.derived() = (logits.array() - maxlogits).exp().matrix();
+    prob.derived() /= prob.sum();
+}
+
 #endif

@@ -8,7 +8,9 @@ fit_mt_interaction_susie(
   x,
   y,
   w,
-  levels_per_inter = 3L,
+  levels_per_wx = 3L,
+  levels_per_w = 1L,
+  levels_per_x = 1L,
   max_iter = 100L,
   min_iter = 1L,
   coverage = 0.9,
@@ -16,9 +18,6 @@ fit_mt_interaction_susie(
   prior_var = 0.1,
   min_pip_cutoff = NULL,
   full_stat = TRUE,
-  stdize_lbf = FALSE,
-  local_residual = FALSE,
-  add_marginal = TRUE,
   update_prior = FALSE,
   do_hard_selection = FALSE,
   hard_lodds_cutoff = 0
@@ -30,6 +29,12 @@ fit_mt_interaction_susie(
 \item{y}{output matrix}
 
 \item{w}{interaction matrix}
+
+\item{levels_per_wx}{number of "single" effects for w*x terms}
+
+\item{levels_per_w}{number of "single" effects for w terms}
+
+\item{levels_per_x}{number of "single" effects for x terms}
 
 \item{max_iter}{maximum iterations}
 
@@ -43,13 +48,7 @@ fit_mt_interaction_susie(
 
 \item{full_stat}{keep full statistics}
 
-\item{stdize_lbf}{trait-wise standardize LBF}
-
-\item{local_residual}{locally calculate residuals}
-
 \item{update_prior}{update prior variance or not}
-
-\item{levels}{number of "single" effects}
 }
 \value{
 a list of mtSusie results

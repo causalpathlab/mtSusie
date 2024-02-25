@@ -45,10 +45,6 @@
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index (if W!=NULL)}
 #'
-#'
-#' @import Rcpp
-#' @import RcppEigen
-#' 
 #' @export
 #' 
 susie_cs <- function(X, Y, L = 5,
@@ -173,6 +169,9 @@ susie_cs <- function(X, Y, L = 5,
 #' \item{lfsr}{local false sign rate}
 #' \item{lodds}{log-odds ratio}
 #' \item{interaction}{interacting column index (if W!=NULL)}
+#' 
+#' @import Rcpp
+#' @import RcppEigen
 #' 
 #' @export
 #'

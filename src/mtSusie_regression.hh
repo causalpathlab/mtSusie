@@ -192,13 +192,12 @@ model_fitted(MODEL &model)
 template <typename MODEL, typename Derived>
 void
 calibrate_residual_variance(MODEL &model,
-                            const Eigen::MatrixBase<Derived> &X,
                             const Eigen::MatrixBase<Derived> &Y,
                             const Scalar update_rate = .1)
 {
     // Expected R2 value for each output
     // (Y - X * E[theta])^2
-    const Scalar nn = X.rows();
+    const Scalar nn = model.n;
     colsum_safe((Y - model.fitted_nm).cwiseProduct(Y - model.fitted_nm),
                 model.temp_m);
 
@@ -294,7 +293,7 @@ update_shared_regression(MODEL &model,
         // This is actually dangerous...
         // prone to overfitting
         if (local_residual) {
-            calibrate_residual_variance(model, X, model.partial_nm);
+            calibrate_residual_variance(model, model.partial_nm);
         }
 
         score += SER(X,                  // 3. single-effect regression
@@ -312,7 +311,7 @@ update_shared_regression(MODEL &model,
 
     // Calibrate residual calculation globally
     if (!local_residual) {
-        calibrate_residual_variance(model, X, Y);
+        calibrate_residual_variance(model, Y);
     }
 
     return score;
