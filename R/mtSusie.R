@@ -5,7 +5,7 @@
 #' @param X n x p design matrix
 #' @param Y n x m output matrix
 #' @param L levels or expected num of independent factors (default: 5)
-#' @param clamp handle outliers by winsorization (default: NULL)
+#' 
 #' @param max.iter maximum iterations (default: 100)
 #' @param min.iter minimum iterations (default: 5)
 #' @param tol tolerance level check convergence (default: 1e-8)
@@ -48,7 +48,6 @@
 #' @export
 #' 
 susie_cs <- function(X, Y, L = 5,
-                     clamp = NULL,
                      max.iter = 100,
                      min.iter = 5,
                      tol = 1e-8,
@@ -242,7 +241,6 @@ mt_susie_inter <- function(X, Y, W,
                            L.wx = 5,
                            L.x = 1,
                            L.w = 1,
-                           clamp = NULL,
                            max.iter = 100,
                            min.iter = 5,
                            tol = 1e-8,
