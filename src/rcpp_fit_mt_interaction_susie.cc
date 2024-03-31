@@ -241,6 +241,9 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
         Rcpp::as<Scalar>(min_pip_cutoff) :
         (1. / static_cast<Scalar>(xx.cols()));
 
+    ret["cs.x"] = mt_susie_credible_sets(model_x, coverage, _pip_cutoff);
+    ret["cs.w"] = mt_susie_credible_sets(model_w, coverage, _pip_cutoff);
+
     std::vector<int> inter_names;
     {
         for (Index l = 0; l < levels_per_wx; ++l) {
@@ -251,19 +254,20 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
         ret["interaction"] = inter_names;
     }
 
-    Rcpp::List cs = mt_susie_credible_sets(model_wx, coverage, _pip_cutoff);
+    Rcpp::List cs_inter =
+        mt_susie_credible_sets(model_wx, coverage, _pip_cutoff);
     {
-        auto level_vec = Rcpp::as<std::vector<int>>(cs["level"]);
+        auto level_vec = Rcpp::as<std::vector<int>>(cs_inter["level"]);
         std::vector<int> _out;
         _out.reserve(level_vec.size());
         for (int l : level_vec) {
             const int j = l - 1; // zero-baased
             _out.emplace_back(inter_names.at(j));
         }
-        cs["interaction"] = _out;
+        cs_inter["interaction"] = _out;
     }
 
-    ret["cs"] = cs;
+    ret["cs.wx"] = cs_inter;
     ret["score"] = score_vec;
     ret["fitted"] = model_fitted(model_wx);
     ret["residuals"] = model_residuals(model_wx, yy);
