@@ -8,7 +8,6 @@ susie_cs(
   X,
   Y,
   L = 5,
-  clamp = NULL,
   max.iter = 100,
   min.iter = 5,
   tol = 1e-08,
@@ -26,8 +25,6 @@ susie_cs(
 \item{Y}{n x m output matrix}
 
 \item{L}{levels or expected num of independent factors (default: 5)}
-
-\item{clamp}{handle outliers by winsorization (default: NULL)}
 
 \item{max.iter}{maximum iterations (default: 100)}
 

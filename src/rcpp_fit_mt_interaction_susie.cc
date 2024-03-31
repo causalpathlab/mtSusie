@@ -178,29 +178,35 @@ fit_mt_interaction_susie(const Rcpp::NumericMatrix x,
             Y = yy - model_w.fitted_nm - model_x.fitted_nm;
             score = 0.;
 
+            Index i = 0;
             for (Index l = 0; l < levels_per_wx; ++l) {
                 for (Index k = 0; k < ww.cols(); ++k) {
-                    WX.setZero(); //
-                    WX = xx.array().colwise() *
-                        ww.col(k).array(); // weighted by W[,k]
+                    /////////////////////////////
+                    // construct temporary WX  //
+                    /////////////////////////////
+
+                    WX.setZero();
+                    WX = xx.array().colwise() * ww.col(k).array();
+
+                    discount_model_stat(model_wx,     // a. discount stat
+                                        WX,           //
+                                        Y,            //
+                                        i);           //
+                                                      //
+                    score += SER(WX,                  // b. update stat
+                                 model_wx.partial_nm, // partial prediction
+                                 model_wx.residvar_m, // residual variance
+                                 model_wx.get_v0(i),  // prior variance
+                                 stat_wx,             // statistics
+                                 update_prior);       //
+                                                      //
+                    update_model_stat(model_wx,       // c. Put back the updated
+                                      WX,             // design matrix
+                                      stat_wx,        // new stat
+                                      i);             // level i
                 }
-                discount_model_stat(model_wx,     // a. discount model stat
-                                    WX,           //
-                                    Y,            //
-                                    l);           //
-                                                  //
-                score += SER(WX,                  // b. update sufficient stat
-                             model_wx.partial_nm, //   - partial prediction
-                             model_wx.residvar_m, //   - residual variance
-                             model_wx.get_v0(l),  //   - prior variance
-                             stat_wx,             //   - statistics
-                             update_prior);       //
-                                                  //
-                update_model_stat(model_wx,       // c. Put back the updated
-                                  WX,             // design matrix
-                                  stat_wx,        // new stat
-                                  l);             // level l
             }
+            ++i;
             calibrate_residual_variance(model_wx, Y);
         } // end of Y ~ W * X
 

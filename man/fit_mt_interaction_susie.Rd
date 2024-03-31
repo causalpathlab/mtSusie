@@ -18,6 +18,7 @@ fit_mt_interaction_susie(
   prior_var = 0.1,
   min_pip_cutoff = NULL,
   full_stat = TRUE,
+  local_residual = FALSE,
   update_prior = FALSE
 )
 }
@@ -45,6 +46,8 @@ fit_mt_interaction_susie(
 \item{min_pip_cutoff}{minimum PIP cutoff in building credible sets}
 
 \item{full_stat}{keep full statistics}
+
+\item{local_residual}{locally calculate residuals}
 
 \item{update_prior}{update prior variance or not}
 }
